@@ -801,6 +801,8 @@ def graficar_ruta_reabastecimiento_astar(resultado_astar, directorio="reportes")
         ys = [p[0] for p in camino]
         ax.plot(xs, ys, color=COLOR_ALERTA_ALTA, linewidth=3.5, linestyle="-", marker="o", markersize=6, label="Ruta Óptima A*")
 
+    h_init = ruta_data.get("heuristica_h_inicial", 18)
+
     # Dibujar puntos de estantes y secuencia
     for paso in secuencia:
         pos_f = paso["pos_hacia"]
@@ -816,12 +818,12 @@ def graficar_ruta_reabastecimiento_astar(resultado_astar, directorio="reportes")
 
     # Marcar origen (0,0)
     ax.scatter(0, 0, color=COLOR_EXITO, s=250, zorder=6, label="Recepción / Inicio (0,0)")
-    ax.text(0.15, -0.2, "INICIO (0,0)", fontsize=9, fontweight="bold", color=COLOR_EXITO)
+    ax.text(0.15, -0.25, f"INICIO (0,0)\nf={h_init:.0f} (g=0+h={h_init:.0f})", fontsize=8, fontweight="bold", color=COLOR_EXITO)
 
-    ax.set_title(f"Optimización de Ruta Logística con Algoritmo A*\n"
-                 f"Función f(n) = g(n) + h(n) | Distancia Manhattan (Paarth Sonkiya 2024)\n"
-                 f"Costo Total Recorrido g(n) = {ruta_data['costo_g_total']:.0f} | Heurística Acumulada h(n) = {ruta_data['heuristica_h_total']:.0f}",
-                 fontsize=12, fontweight="bold", color=COLOR_PRIMARIO, pad=15)
+    ax.set_title(f"Optimización de Ruta Logística de Picking con A* (Secuencial Multi-Objetivo - Nearest Neighbor)\n"
+                 f"Función f(n) = g(n) + h(n) | Distancia Manhattan a próximo objetivo (Paarth Sonkiya 2024)\n"
+                 f"Costo Total Recorrido g(n) = {ruta_data['costo_g_total']:.0f} | Heurística Inicial h(0,0) = {h_init:.0f}",
+                 fontsize=11, fontweight="bold", color=COLOR_PRIMARIO, pad=15)
 
     ax.set_xlabel("Pasillos / Coordenada Y (Almacén)", fontsize=10)
     ax.set_ylabel("Estantes / Coordenada X (Almacén)", fontsize=10)

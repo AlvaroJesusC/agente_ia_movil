@@ -789,11 +789,12 @@ def generar_reporte_escrito_final(inventario_actual, alertas, predicciones, dato
             ruta_data = astar_res["ruta_reabastecimiento_astar"]
             ordenes_astar = astar_res["ordenes_priorizadas_astar"]
             
-            archivo.write("9.2 Algoritmo de Búsqueda Informada A* (Paarth Sonkiya, 2024):\n")
-            archivo.write("  * Función de Evaluación: f(n) = g(n) + h(n)\n")
-            archivo.write("  * Heurística h(n): Distancia Manhattan d(P1, P2) = |x2 - x1| + |y2 - y1|\n")
-            archivo.write(f"  * Costo Real Acumulado g(n)             : {ruta_data['costo_g_total']:.2f}\n")
-            archivo.write(f"  * Costo Heurístico Acumulado h(n)       : {ruta_data['heuristica_h_total']:.2f}\n")
+            archivo.write("9.2 Algoritmo de Búsqueda Informada A* Secuencial Multi-Objetivo (Paarth Sonkiya, 2024):\n")
+            archivo.write("  * Estrategia: Ruta de Picking con Heurística de Vecino Más Cercano (Nearest Neighbor) + A*\n")
+            archivo.write("  * Función de Evaluación: f(n) = g(n) + h(n) en cada etapa de recorrido\n")
+            archivo.write("  * Heurística h(n): Distancia Manhattan d(n, próximo_estante) = |x - x_obj| + |y - y_obj|\n")
+            archivo.write(f"  * Costo Real Acumulado Total g(n)       : {ruta_data['costo_g_total']:.2f}\n")
+            archivo.write(f"  * Heurística Inicial h(0,0)             : {ruta_data.get('heuristica_h_inicial', 18):.2f}\n")
             archivo.write(f"  * Evaluación Total de Ruta f(n)         : {ruta_data['evaluacion_f_total']:.2f}\n\n")
             
             archivo.write("9.3 Priorización Estratégica de Pedidos (A* Ranking f(n)):\n")

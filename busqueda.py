@@ -181,81 +181,155 @@ class OptimizadorAEstrella:
         """
         return abs(p2[0] - p1[0]) + abs(p2[1] - p1[1])
 
-    def __init__(self, dimension_almacen=(10, 10)):
+    def __init__(self, dimension_almacen=(10, 10), df_inventario=None):
         self.filas, self.columnas = dimension_almacen
-        # Coordenadas predefinidas de los estantes de productos en el almacén (10x10)
         self.posiciones_estantes = {
             "Entrada / Recepcion": (0, 0),
-            "Inca Kola 500ml": (1, 2),
-            "Coca Cola 500ml": (1, 4),
-            "Agua San Luis 625ml": (1, 7),
-            "Yogurt Gloria 1L": (3, 2),
-            "Leche Gloria 1L": (3, 5),
-            "Lays 42g": (5, 1),
-            "Doritos 42g": (5, 3),
-            "InkaChips 40g": (5, 6),
-            "Sublime 30g": (5, 8),
-            "Pan de Molde Bimbo 500g": (7, 2),
-            "Arroz Costeño 1kg": (8, 1),
-            "Aceite Primor 1L": (8, 4),
-            "Fideos Don Vittorio 500g": (8, 6),
-            "Atún Florida 170g": (9, 3),
-            "Detergente Ariel 500g": (9, 7),
             "Zona de Despacho": (9, 9)
         }
+        if df_inventario is not None:
+            self.construir_mapa_desde_dataframe(df_inventario)
+        else:
+            # Mapa por defecto
+            self.posiciones_estantes.update({
+                "Inca Kola 500ml": (1, 2), "Coca Cola 500ml": (1, 4), "Agua San Luis 625ml": (1, 7),
+                "Yogurt Gloria 1L": (3, 2), "Leche Gloria 1L": (3, 5),
+                "Lays 42g": (5, 1), "Doritos 42g": (5, 3), "InkaChips 40g": (5, 6), "Sublime 30g": (5, 8),
+                "Pan de Molde Bimbo 500g": (7, 2), "Arroz Costeño 1kg": (8, 1), "Aceite Primor 1L": (8, 4),
+                "Fideos Don Vittorio 500g": (8, 6), "Atún Florida 170g": (9, 3), "Detergente Ariel 500g": (9, 7)
+            })
+
+    def construir_mapa_desde_dataframe(self, df_inventario):
+        """
+        Construye dinámicamente la ubicación de los estantes en la grilla del almacén (10x10)
+        a partir de los datos cargados del CSV de inventario por el Sensor.
+        """
+        self.posiciones_estantes = {
+            "Entrada / Recepcion": (0, 0),
+            "Zona de Despacho": (9, 9)
+        }
+        col_nombre = "producto_nombre" if "producto_nombre" in df_inventario.columns else "producto_id"
+        productos_unicos = df_inventario[col_nombre].dropna().unique()
+
+        # Asignar coordenadas fijas del mapa según el orden en el inventario
+        posiciones_disponibles = [
+            (1, 2), (1, 4), (1, 7),
+            (3, 2), (3, 5),
+            (5, 1), (5, 3), (5, 6), (5, 8),
+            (7, 2), (8, 1), (8, 4), (8, 6),
+            (9, 3), (9, 7)
+        ]
+        for idx, prod in enumerate(productos_unicos):
+            if idx < len(posiciones_disponibles):
+                self.posiciones_estantes[prod] = posiciones_disponibles[idx]
+            else:
+                f = 1 + (idx // 4) * 2
+                c = 1 + (idx % 4) * 2
+                self.posiciones_estantes[prod] = (min(f, 9), min(c, 9))
 
     def resolver_ruta_reabastecimiento(self, lista_productos_criticos):
         """
-        Encuentra la secuencia y ruta óptima en el almacén para reabastecer/recolectar
-        los productos en estado crítico utilizando A*.
+        Encuentra la secuencia de reabastecimiento/picking y la ruta óptima en el almacén
+        utilizando A* secuencial de múltiples etapas con Heurística de Vecino Más Cercano (Nearest Neighbor).
+        
+        Lógica:
+        1. Inicia en Entrada / Recepción (0,0).
+        2. Selecciona dinámicamente el estante de producto no visitado más cercano (menor Distancia Manhattan).
+        3. Navega hacia ese estante usando A* (f(n) = g(n) + h(n), con h(n) hacia el objetivo de esa etapa).
+        4. Repite el proceso hasta visitar todos los productos críticos en alerta.
+        5. En la etapa final, navega desde el último producto visitado hacia la Zona de Despacho (9,9).
         """
         if not lista_productos_criticos:
             lista_productos_criticos = ["Inca Kola 500ml", "Leche Gloria 1L", "Arroz Costeño 1kg"]
 
         origen = "Entrada / Recepcion"
         destino_final = "Zona de Despacho"
+        pos_destino_final = self.posiciones_estantes.get(destino_final, (9, 9))
+        pos_origen = self.posiciones_estantes.get(origen, (0, 0))
 
-        puntos_a_visitar = [origen] + [p for p in lista_productos_criticos if p in self.posiciones_estantes] + [destino_final]
+        # Filtrar productos válidos en el almacén
+        pendientes = [p for p in lista_productos_criticos if p in self.posiciones_estantes and p not in (origen, destino_final)]
+        if not pendientes:
+            pendientes = [p for p in ["Inca Kola 500ml", "Leche Gloria 1L", "Arroz Costeño 1kg"] if p in self.posiciones_estantes]
 
         camino_completo_coordenadas = []
         secuencia_nodos = []
         costo_g_acumulado = 0.0
-        heuristica_h_acumulada = 0.0
-        evaluacion_f_acumulada = 0.0
 
-        for i in range(len(puntos_a_visitar) - 1):
-            inicio_nombre = puntos_a_visitar[i]
-            meta_nombre = puntos_a_visitar[i+1]
-            pos_inicio = self.posiciones_estantes[inicio_nombre]
-            pos_meta = self.posiciones_estantes[meta_nombre]
+        pos_actual = pos_origen
+        actual_nombre = origen
 
-            sub_camino, g_sub, h_sub, f_sub = self._astar_punto_a_punto(pos_inicio, pos_meta)
+        # Heurística inicial desde (0,0) hacia el primer producto más cercano
+        if pendientes:
+            primer_producto = min(pendientes, key=lambda p: self.distancia_manhattan(pos_origen, self.posiciones_estantes[p]))
+            h_inicial = self.distancia_manhattan(pos_origen, self.posiciones_estantes[primer_producto])
+        else:
+            h_inicial = self.distancia_manhattan(pos_origen, pos_destino_final)
+
+        # Etapas de picking: visitar todos los productos pendientes por Nearest Neighbor
+        while pendientes:
+            proximo_nombre = min(pendientes, key=lambda p: self.distancia_manhattan(pos_actual, self.posiciones_estantes[p]))
+            pos_proximo = self.posiciones_estantes[proximo_nombre]
+            pendientes.remove(proximo_nombre)
+
+            sub_camino, g_sub, _, _ = self._astar_punto_a_punto(pos_actual, pos_proximo)
 
             if camino_completo_coordenadas:
                 camino_completo_coordenadas.extend(sub_camino[1:])
             else:
                 camino_completo_coordenadas.extend(sub_camino)
 
+            costo_g_acumulado += g_sub
+
+            if pendientes:
+                siguiente_temp = min(pendientes, key=lambda p: self.distancia_manhattan(pos_proximo, self.posiciones_estantes[p]))
+                h_nodo = self.distancia_manhattan(pos_proximo, self.posiciones_estantes[siguiente_temp])
+            else:
+                h_nodo = self.distancia_manhattan(pos_proximo, pos_destino_final)
+
+            f_nodo = costo_g_acumulado + h_nodo
+
             secuencia_nodos.append({
-                "desde": inicio_nombre,
-                "hacia": meta_nombre,
-                "pos_desde": pos_inicio,
-                "pos_hacia": pos_meta,
-                "costo_g": g_sub,
-                "heuristica_h": h_sub,
-                "evaluacion_f": f_sub
+                "desde": actual_nombre,
+                "hacia": proximo_nombre,
+                "pos_desde": pos_actual,
+                "pos_hacia": pos_proximo,
+                "costo_g": costo_g_acumulado,
+                "heuristica_h": h_nodo,
+                "evaluacion_f": f_nodo
             })
 
-            costo_g_acumulado += g_sub
-            heuristica_h_acumulada += h_sub
-            evaluacion_f_acumulada += f_sub
+            pos_actual = pos_proximo
+            actual_nombre = proximo_nombre
+
+        # Etapa final: desde el último producto hacia Zona de Despacho (9,9)
+        sub_camino_final, g_final_sub, _, _ = self._astar_punto_a_punto(pos_actual, pos_destino_final)
+        if camino_completo_coordenadas:
+            camino_completo_coordenadas.extend(sub_camino_final[1:])
+        else:
+            camino_completo_coordenadas.extend(sub_camino_final)
+
+        costo_g_acumulado += g_final_sub
+        h_final = 0
+
+        secuencia_nodos.append({
+            "desde": actual_nombre,
+            "hacia": destino_final,
+            "pos_desde": pos_actual,
+            "pos_hacia": pos_destino_final,
+            "costo_g": costo_g_acumulado,
+            "heuristica_h": h_final,
+            "evaluacion_f": costo_g_acumulado + h_final
+        })
 
         return {
             "secuencia_nodos": secuencia_nodos,
             "camino_coordenadas": camino_completo_coordenadas,
             "costo_g_total": costo_g_acumulado,
-            "heuristica_h_total": heuristica_h_acumulada,
-            "evaluacion_f_total": evaluacion_f_acumulada
+            "heuristica_h_total": h_inicial,
+            "heuristica_h_inicial": h_inicial,
+            "evaluacion_f_inicial": h_inicial,
+            "evaluacion_f_total": costo_g_acumulado
         }
 
     def _astar_punto_a_punto(self, pos_inicio, pos_meta):
@@ -308,10 +382,24 @@ class OptimizadorAEstrella:
         """
         alertas_criticas = [a for a in lista_alertas if a.get("gravedad") in ["ALTA", "CRITICA", "MEDIA"]]
 
+        mapa_nombres = {
+            "prod_001": "Inca Kola 500ml", "prod_002": "Coca Cola 500ml", "prod_003": "Agua San Luis 625ml",
+            "prod_004": "Yogurt Gloria 1L", "prod_005": "Leche Gloria 1L",
+            "prod_006": "Lays 42g", "prod_007": "Doritos 42g", "prod_008": "InkaChips 40g", "prod_009": "Sublime 30g",
+            "prod_010": "Pan de Molde Bimbo 500g",
+            "prod_011": "Arroz Costeño 1kg", "prod_012": "Aceite Primor 1L", "prod_013": "Fideos Don Vittorio 500g",
+            "prod_014": "Atún Florida 170g", "prod_015": "Detergente Ariel 500g"
+        }
+
         ordenes_priorizadas = []
         for a in alertas_criticas:
             prod_id = a.get("producto_id", "Desconocido")
-            prod_nombre = a.get("producto_nombre", prod_id)
+            prod_nombre = a.get("producto_nombre", mapa_nombres.get(prod_id, prod_id))
+            if prod_nombre in mapa_nombres:
+                prod_nombre = mapa_nombres[prod_nombre]
+            elif prod_id in mapa_nombres:
+                prod_nombre = mapa_nombres[prod_id]
+
             tipo = a.get("tipo", "GENERAL")
             prob_riesgo = a.get("probabilidad_bayesiana", 0.5)
 

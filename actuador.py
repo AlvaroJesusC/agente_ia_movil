@@ -194,7 +194,7 @@ class ActuadorOptimizado:
         2. Optimización de la ruta de reabastecimiento en almacén usando Distancia Manhattan.
         """
         from busqueda import OptimizadorAEstrella
-        optimizador = OptimizadorAEstrella()
+        optimizador = OptimizadorAEstrella(df_inventario=df_inventario)
 
         # 1. Priorización estratégica de órdenes de compra
         ordenes_priorizadas = optimizador.priorizar_ordenes_compra_astar(lista_alertas)

@@ -1,6 +1,6 @@
 ========================================================================
          INFORME DE PREDICCIÓN Y OPTIMIZACIÓN DE INVENTARIO - PYMEVISION AI
-Fecha de Emisión: 05/07/2026 12:27:16
+Fecha de Emisión: 05/07/2026 13:31:42
 ========================================================================
 
 1. RESULTADOS DE LA SIMULACIÓN AUTÓNOMA (JUNIO - AGOSTO 2026)
@@ -303,26 +303,27 @@ Para dar cumplimiento estricto al sílabo del curso y potenciar la toma de
 decisiones en el ciclo Sense-Plan-Act del Actuador, se incorporaron 3 algoritmos:
 
 9.1 Búsqueda No Informada en Árbol de Categorías (BFS vs DFS):
-  * BFS (Breadth-First Search / Cola FIFO) : Recorre 30 nodos por niveles.
+  * BFS (Breadth-First Search / Cola FIFO) : Recorre 36 nodos por niveles.
     Garantiza la inspección equitativa nivel por nivel de todas las categorías.
-  * DFS (Depth-First Search / Pila LIFO)  : Recorre 30 nodos en profundidad.
+  * DFS (Depth-First Search / Pila LIFO)  : Recorre 36 nodos en profundidad.
     Permite la auditoría completa rama por rama de cada categoría de producto.
 
-9.2 Algoritmo de Búsqueda Informada A* (Paarth Sonkiya, 2024):
-  * Función de Evaluación: f(n) = g(n) + h(n)
-  * Heurística h(n): Distancia Manhattan d(P1, P2) = |x2 - x1| + |y2 - y1|
-  * Costo Real Acumulado g(n)             : 18.00
-  * Costo Heurístico Acumulado h(n)       : 0.00
-  * Evaluación Total de Ruta f(n)         : 18.00
+9.2 Algoritmo de Búsqueda Informada A* Secuencial Multi-Objetivo (Paarth Sonkiya, 2024):
+  * Estrategia: Ruta de Picking con Heurística de Vecino Más Cercano (Nearest Neighbor) + A*
+  * Función de Evaluación: f(n) = g(n) + h(n) en cada etapa de recorrido
+  * Heurística h(n): Distancia Manhattan d(n, próximo_estante) = |x - x_obj| + |y - y_obj|
+  * Costo Real Acumulado Total g(n)       : 52.00
+  * Heurística Inicial h(0,0)             : 3.00
+  * Evaluación Total de Ruta f(n)         : 52.00
 
 9.3 Priorización Estratégica de Pedidos (A* Ranking f(n)):
 Producto                  | Alerta             | Prob. Riesgo | Costo g(n) | Heur. h(n) | Prioridad f(n)
 -----------------------------------------------------------------------------------------------
-prod_001                  | RIESGO_BAYESIANO   |       80.0% |      30.00 |      80.00 |       110.00
-prod_002                  | RIESGO_BAYESIANO   |       80.0% |      30.00 |      80.00 |       110.00
-prod_003                  | RIESGO_BAYESIANO   |       80.0% |      30.00 |      80.00 |       110.00
-prod_004                  | RIESGO_BAYESIANO   |       80.0% |      30.00 |      80.00 |       110.00
-prod_005                  | RIESGO_BAYESIANO   |       80.0% |      30.00 |      80.00 |       110.00
+Inca Kola 500ml           | RIESGO_BAYESIANO   |       80.0% |      30.00 |      80.00 |       110.00
+Coca Cola 500ml           | RIESGO_BAYESIANO   |       80.0% |      30.00 |      80.00 |       110.00
+Agua San Luis 625ml       | RIESGO_BAYESIANO   |       80.0% |      30.00 |      80.00 |       110.00
+Yogurt Gloria 1L          | RIESGO_BAYESIANO   |       80.0% |      30.00 |      80.00 |       110.00
+Leche Gloria 1L           | RIESGO_BAYESIANO   |       80.0% |      30.00 |      80.00 |       110.00
 
 ========================================================================
 Fin del reporte de control de stock y optimización de ventas.
