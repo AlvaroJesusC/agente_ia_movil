@@ -1,0 +1,329 @@
+========================================================================
+         INFORME DE PREDICCIÓN Y OPTIMIZACIÓN DE INVENTARIO - PYMEVISION AI
+Fecha de Emisión: 05/07/2026 12:27:16
+========================================================================
+
+1. RESULTADOS DE LA SIMULACIÓN AUTÓNOMA (JUNIO - AGOSTO 2026)
+------------------------------------------------------------------------
+Durante los meses de junio a agosto de 2026, el agente inteligente gestionó
+el stock de forma 100% autónoma ante la ausencia de registros de ventas.
+
+  - Pedidos de compra automáticos colocados al proveedor : 653
+  - Quiebres de stock potenciales identificados y evitados : 653
+  - Ofertas aplicadas por riesgo de vencimiento (mermas) : 58
+
+2. ALERTAS CRÍTICAS DE STOCK EN SEPTIEMBRE (ACCIONAR INMEDIATO)
+------------------------------------------------------------------------
+1. Producto: Inca Kola 500ml
+   Tipo de Riesgo: RIESGO_QUIEBRE
+   Detalle: El stock disponible (14.0 und.) no cubrirá la demanda proyectada (22.8 und.) más stock de seguridad (6 und.) durante los 1 días de reposición.
+   Acción Recomendada: Generar pedido automático de 24 unidades al proveedor.
+
+2. Producto: Inca Kola 500ml
+   Tipo de Riesgo: RIESGO_BAYESIANO
+   Detalle: La Red Bayesiana (Noisy-OR) estima una probabilidad de quiebre del 80.0% basada en 0 causas activas: factores no modelados (probabilidad de fuga).
+   Acción Recomendada: Reforzar el abastecimiento preventivo. Factor de ajuste aplicado al stock de seguridad: x1.50.
+
+3. Producto: Coca Cola 500ml
+   Tipo de Riesgo: RIESGO_BAYESIANO
+   Detalle: La Red Bayesiana (Noisy-OR) estima una probabilidad de quiebre del 80.0% basada en 0 causas activas: factores no modelados (probabilidad de fuga).
+   Acción Recomendada: Reforzar el abastecimiento preventivo. Factor de ajuste aplicado al stock de seguridad: x1.50.
+
+4. Producto: Agua San Luis 625ml
+   Tipo de Riesgo: RIESGO_QUIEBRE
+   Detalle: El stock disponible (12.0 und.) no cubrirá la demanda proyectada (28.9 und.) más stock de seguridad (7 und.) durante los 1 días de reposición.
+   Acción Recomendada: Generar pedido automático de 24 unidades al proveedor.
+
+5. Producto: Agua San Luis 625ml
+   Tipo de Riesgo: RIESGO_BAYESIANO
+   Detalle: La Red Bayesiana (Noisy-OR) estima una probabilidad de quiebre del 80.0% basada en 0 causas activas: factores no modelados (probabilidad de fuga).
+   Acción Recomendada: Reforzar el abastecimiento preventivo. Factor de ajuste aplicado al stock de seguridad: x1.50.
+
+6. Producto: Yogurt Gloria 1L
+   Tipo de Riesgo: RIESGO_BAYESIANO
+   Detalle: La Red Bayesiana (Noisy-OR) estima una probabilidad de quiebre del 80.0% basada en 0 causas activas: factores no modelados (probabilidad de fuga).
+   Acción Recomendada: Reforzar el abastecimiento preventivo. Factor de ajuste aplicado al stock de seguridad: x1.50.
+
+7. Producto: Leche Gloria 1L
+   Tipo de Riesgo: RIESGO_BAYESIANO
+   Detalle: La Red Bayesiana (Noisy-OR) estima una probabilidad de quiebre del 80.0% basada en 0 causas activas: factores no modelados (probabilidad de fuga).
+   Acción Recomendada: Reforzar el abastecimiento preventivo. Factor de ajuste aplicado al stock de seguridad: x1.50.
+
+8. Producto: Lays 42g
+   Tipo de Riesgo: RIESGO_BAYESIANO
+   Detalle: La Red Bayesiana (Noisy-OR) estima una probabilidad de quiebre del 80.0% basada en 0 causas activas: factores no modelados (probabilidad de fuga).
+   Acción Recomendada: Reforzar el abastecimiento preventivo. Factor de ajuste aplicado al stock de seguridad: x1.50.
+
+9. Producto: Doritos 42g
+   Tipo de Riesgo: RIESGO_BAYESIANO
+   Detalle: La Red Bayesiana (Noisy-OR) estima una probabilidad de quiebre del 80.0% basada en 0 causas activas: factores no modelados (probabilidad de fuga).
+   Acción Recomendada: Reforzar el abastecimiento preventivo. Factor de ajuste aplicado al stock de seguridad: x1.50.
+
+10. Producto: InkaChips 40g
+   Tipo de Riesgo: RIESGO_BAYESIANO
+   Detalle: La Red Bayesiana (Noisy-OR) estima una probabilidad de quiebre del 80.0% basada en 0 causas activas: factores no modelados (probabilidad de fuga).
+   Acción Recomendada: Reforzar el abastecimiento preventivo. Factor de ajuste aplicado al stock de seguridad: x1.50.
+
+11. Producto: Sublime 30g
+   Tipo de Riesgo: RIESGO_QUIEBRE
+   Detalle: El stock disponible (39.0 und.) no cubrirá la demanda proyectada (42.2 und.) más stock de seguridad (12 und.) durante los 3 días de reposición.
+   Acción Recomendada: Generar pedido automático de 24 unidades al proveedor.
+
+12. Producto: Sublime 30g
+   Tipo de Riesgo: RIESGO_BAYESIANO
+   Detalle: La Red Bayesiana (Noisy-OR) estima una probabilidad de quiebre del 80.0% basada en 0 causas activas: factores no modelados (probabilidad de fuga).
+   Acción Recomendada: Reforzar el abastecimiento preventivo. Factor de ajuste aplicado al stock de seguridad: x1.50.
+
+13. Producto: Pan de Molde Bimbo 500g
+   Tipo de Riesgo: RIESGO_BAYESIANO
+   Detalle: La Red Bayesiana (Noisy-OR) estima una probabilidad de quiebre del 80.0% basada en 0 causas activas: factores no modelados (probabilidad de fuga).
+   Acción Recomendada: Reforzar el abastecimiento preventivo. Factor de ajuste aplicado al stock de seguridad: x1.50.
+
+14. Producto: Arroz Costeño 1kg
+   Tipo de Riesgo: RIESGO_BAYESIANO
+   Detalle: La Red Bayesiana (Noisy-OR) estima una probabilidad de quiebre del 80.0% basada en 0 causas activas: factores no modelados (probabilidad de fuga).
+   Acción Recomendada: Reforzar el abastecimiento preventivo. Factor de ajuste aplicado al stock de seguridad: x1.50.
+
+15. Producto: Aceite Primor 1L
+   Tipo de Riesgo: RIESGO_QUIEBRE
+   Detalle: El stock disponible (11.0 und.) no cubrirá la demanda proyectada (11.4 und.) más stock de seguridad (3 und.) durante los 1 días de reposición.
+   Acción Recomendada: Generar pedido automático de 36 unidades al proveedor.
+
+16. Producto: Aceite Primor 1L
+   Tipo de Riesgo: RIESGO_BAYESIANO
+   Detalle: La Red Bayesiana (Noisy-OR) estima una probabilidad de quiebre del 80.0% basada en 0 causas activas: factores no modelados (probabilidad de fuga).
+   Acción Recomendada: Reforzar el abastecimiento preventivo. Factor de ajuste aplicado al stock de seguridad: x1.50.
+
+17. Producto: Fideos Don Vittorio 500g
+   Tipo de Riesgo: RIESGO_BAYESIANO
+   Detalle: La Red Bayesiana (Noisy-OR) estima una probabilidad de quiebre del 80.0% basada en 0 causas activas: factores no modelados (probabilidad de fuga).
+   Acción Recomendada: Reforzar el abastecimiento preventivo. Factor de ajuste aplicado al stock de seguridad: x1.50.
+
+18. Producto: Atún Florida 170g
+   Tipo de Riesgo: RIESGO_QUIEBRE
+   Detalle: El stock disponible (11.0 und.) no cubrirá la demanda proyectada (13.5 und.) más stock de seguridad (3 und.) durante los 2 días de reposición.
+   Acción Recomendada: Generar pedido automático de 36 unidades al proveedor.
+
+19. Producto: Atún Florida 170g
+   Tipo de Riesgo: RIESGO_BAYESIANO
+   Detalle: La Red Bayesiana (Noisy-OR) estima una probabilidad de quiebre del 80.0% basada en 0 causas activas: factores no modelados (probabilidad de fuga).
+   Acción Recomendada: Reforzar el abastecimiento preventivo. Factor de ajuste aplicado al stock de seguridad: x1.50.
+
+20. Producto: Detergente Ariel 500g
+   Tipo de Riesgo: RIESGO_BAYESIANO
+   Detalle: La Red Bayesiana (Noisy-OR) estima una probabilidad de quiebre del 80.0% basada en 0 causas activas: factores no modelados (probabilidad de fuga).
+   Acción Recomendada: Reforzar el abastecimiento preventivo. Factor de ajuste aplicado al stock de seguridad: x1.50.
+
+3. ALERTAS MODERADAS Y RECOMENDACIONES EN SEPTIEMBRE
+------------------------------------------------------------------------
+1. Producto: Coca Cola 500ml
+   Tipo de Alerta: RIESGO_QUIEBRE
+   Detalle: El stock disponible (69.0 und.) no cubrirá la demanda proyectada (58.7 und.) más stock de seguridad (16 und.) durante los 3 días de reposición.
+   Acción Recomendada: Generar pedido automático de 48 unidades al proveedor.
+
+2. Producto: Pan de Molde Bimbo 500g
+   Tipo de Alerta: RIESGO_VENCIMIENTO
+   Detalle: Stock físico (41.0 und.) supera la demanda proyectada (29.2 und.) para los próximos 2 días antes del vencimiento. Riesgo de merma de 11 und.
+   Acción Recomendada: Aplicar promoción del 15% de descuento. Reducir precio a S/. 5.52 para acelerar venta.
+
+3. Producto: Detergente Ariel 500g
+   Tipo de Alerta: RIESGO_QUIEBRE
+   Detalle: El stock disponible (8.0 und.) no cubrirá la demanda proyectada (6.4 und.) más stock de seguridad (3 und.) durante los 1 días de reposición.
+   Acción Recomendada: Generar pedido automático de 12 unidades al proveedor.
+
+4. ALERTAS OPERATIVAS (HORAS PICO / FERIADOS SEPTIEMBRE)
+------------------------------------------------------------------------
+- Producto: Inca Kola 500ml | HORA_PICO
+  Detalle: El modelo detecta picos de afluencia y ventas en las horas: 20:00, 21:00, 22:00, 23:00.
+  Acción: Tener listo y reabastecido el stock en góndola a partir de las 19:30.
+
+- Producto: Coca Cola 500ml | HORA_PICO
+  Detalle: El modelo detecta picos de afluencia y ventas en las horas: 20:00, 21:00, 22:00, 23:00.
+  Acción: Tener listo y reabastecido el stock en góndola a partir de las 19:30.
+
+- Producto: Agua San Luis 625ml | HORA_PICO
+  Detalle: El modelo detecta picos de afluencia y ventas en las horas: 20:00, 21:00, 22:00, 23:00.
+  Acción: Tener listo y reabastecido el stock en góndola a partir de las 19:30.
+
+- Producto: Yogurt Gloria 1L | HORA_PICO
+  Detalle: El modelo detecta picos de afluencia y ventas en las horas: 20:00, 21:00, 22:00, 23:00.
+  Acción: Tener listo y reabastecido el stock en góndola a partir de las 19:30.
+
+- Producto: Leche Gloria 1L | HORA_PICO
+  Detalle: El modelo detecta picos de afluencia y ventas en las horas: 20:00, 21:00, 22:00, 23:00.
+  Acción: Tener listo y reabastecido el stock en góndola a partir de las 19:30.
+
+- Producto: Lays 42g | HORA_PICO
+  Detalle: El modelo detecta picos de afluencia y ventas en las horas: 20:00, 21:00, 22:00, 23:00.
+  Acción: Tener listo y reabastecido el stock en góndola a partir de las 19:30.
+
+- Producto: Doritos 42g | HORA_PICO
+  Detalle: El modelo detecta picos de afluencia y ventas en las horas: 20:00, 21:00, 22:00, 23:00.
+  Acción: Tener listo y reabastecido el stock en góndola a partir de las 19:30.
+
+- Producto: InkaChips 40g | HORA_PICO
+  Detalle: El modelo detecta picos de afluencia y ventas en las horas: 20:00, 21:00, 22:00, 23:00.
+  Acción: Tener listo y reabastecido el stock en góndola a partir de las 19:30.
+
+- Producto: Sublime 30g | HORA_PICO
+  Detalle: El modelo detecta picos de afluencia y ventas en las horas: 20:00, 21:00, 22:00, 23:00.
+  Acción: Tener listo y reabastecido el stock en góndola a partir de las 19:30.
+
+- Producto: Pan de Molde Bimbo 500g | HORA_PICO
+  Detalle: El modelo detecta picos de afluencia y ventas en las horas: 20:00, 21:00, 22:00, 23:00.
+  Acción: Tener listo y reabastecido el stock en góndola a partir de las 19:30.
+
+- Producto: Arroz Costeño 1kg | HORA_PICO
+  Detalle: El modelo detecta picos de afluencia y ventas en las horas: 20:00, 21:00, 22:00, 23:00.
+  Acción: Tener listo y reabastecido el stock en góndola a partir de las 19:30.
+
+- Producto: Aceite Primor 1L | HORA_PICO
+  Detalle: El modelo detecta picos de afluencia y ventas en las horas: 20:00, 21:00, 22:00, 23:00.
+  Acción: Tener listo y reabastecido el stock en góndola a partir de las 19:30.
+
+- Producto: Fideos Don Vittorio 500g | HORA_PICO
+  Detalle: El modelo detecta picos de afluencia y ventas en las horas: 20:00, 21:00, 22:00, 23:00.
+  Acción: Tener listo y reabastecido el stock en góndola a partir de las 19:30.
+
+- Producto: Atún Florida 170g | HORA_PICO
+  Detalle: El modelo detecta picos de afluencia y ventas en las horas: 20:00, 21:00, 22:00, 23:00.
+  Acción: Tener listo y reabastecido el stock en góndola a partir de las 19:30.
+
+- Producto: Detergente Ariel 500g | HORA_PICO
+  Detalle: El modelo detecta picos de afluencia y ventas en las horas: 20:00, 21:00, 22:00, 23:00.
+  Acción: Tener listo y reabastecido el stock en góndola a partir de las 19:30.
+
+5. PROYECCIÓN DE DEMANDA PARA SEPTIEMBRE (PRIMEROS 7 DÍAS)
+------------------------------------------------------------------------
+Producto                       | Stock Fis. | Demanda Est. | Estado Alerta  
+---------------------------------------------------------------------------
+Inca Kola 500ml                | 14.0       | 180.0        | ¡QUIEBRE!      
+Coca Cola 500ml                | 21.0       | 142.8        | ¡QUIEBRE!      
+Agua San Luis 625ml            | 12.0       | 204.8        | ¡QUIEBRE!      
+Yogurt Gloria 1L               | 39.0       | 72.6         | ¡QUIEBRE!      
+Leche Gloria 1L                | 38.0       | 97.7         | ¡QUIEBRE!      
+Lays 42g                       | 27.0       | 132.0        | ¡QUIEBRE!      
+Doritos 42g                    | 14.0       | 135.5        | ¡QUIEBRE!      
+InkaChips 40g                  | 33.0       | 152.4        | ¡QUIEBRE!      
+Sublime 30g                    | 15.0       | 105.2        | ¡QUIEBRE!      
+Pan de Molde Bimbo 500g        | 41.0       | 101.7        | ¡QUIEBRE!      
+Arroz Costeño 1kg              | 13.0       | 47.2         | ¡QUIEBRE!      
+Aceite Primor 1L               | 11.0       | 79.8         | ¡QUIEBRE!      
+Fideos Don Vittorio 500g       | 10.0       | 91.5         | ¡QUIEBRE!      
+Atún Florida 170g              | 11.0       | 46.9         | ¡QUIEBRE!      
+Detergente Ariel 500g          | 8.0        | 42.5         | ¡QUIEBRE!      
+
+6. ANÁLISIS DE IMPACTO DE EVENTOS ESPECIALES EN LAS VENTAS (HISTÓRICO)
+------------------------------------------------------------------------
+El agente inteligente ha analizado las ventas consolidadas de los meses históricos
+y ha identificado los siguientes incrementos en la demanda diaria promedio:
+
+- Campaña Día de la Madre  : 470.0  und./día | Incremento: +135%
+- Campaña Fiestas Patrias  : 271.3  und./día | Incremento: + 35%
+- Santa Rosa de Lima       : 266.0  und./día | Incremento: + 33%
+- Campaña Día del Padre    : 252.4  und./día | Incremento: + 26%
+- Periodo Mundial FIFA     : 240.5  und./día | Incremento: + 20%
+- Pre Semana Santa         : 228.3  und./día | Incremento: + 14%
+- Semana Santa             : 217.9  und./día | Incremento: +  9%
+- Batalla de Junín         : 210.0  und./día | Incremento: +  5%
+- Día Normal (Sin eventos) : 199.8  und./día | Línea Base (Normal)
+- San Pedro y San Pablo    : 179.7  und./día | Incremento: +-10%
+
+7. EVALUACIÓN DE PREDICCIÓN EN EVENTOS HISTÓRICOS (REAL VS PREDICHO EN MAYO)
+------------------------------------------------------------------------
+Dado que el periodo de junio a agosto estaba vacío y fue simulado de forma autónoma,
+evaluamos la precisión del agente comparando su predicción contra la venta real
+del evento 'Día de la Madre' ocurrido el 11/05/2026 en el periodo de entrenamiento:
+
+Campaña: Día de la Madre (11/05/2026)
+  * Cantidad de Ventas Real     : 154 unidades
+  * Cantidad de Ventas Predicha : 181.8 unidades
+  * Precisión de Predicción     : 81.9%
+
+8. RED BAYESIANA MIXTA (NOISY-OR) - ANÁLISIS CAUSAL DE INCERTIDUMBRE
+------------------------------------------------------------------------
+Siguiendo la metodología de Vomlel et al. (2023), se implementó una Red
+Bayesiana Mixta con modelo Noisy-OR para el análisis causal de quiebres
+de stock, optimizada mediante el Criterio de Información Bayesiano (BIC).
+
+8.1 Estructura del Modelo:
+  * Nodo objetivo: Quiebre de Stock (variable binaria)
+  * Nodos padre (causas): 6
+    1. Demanda Alta
+    2. Retraso Proveedor
+    3. Clima Adverso
+    4. Es Feriado
+    5. Es Fin Semana
+    6. Stock Bajo
+  * Probabilidad de fuga (p_v,0): 0.2
+    (Captura mermas, robos y errores administrativos no modelados)
+
+8.2 Parámetros Aprendidos (Probabilidades de Inhibición p_v,j):
+  * Demanda Alta             : p_v,j = 0.9141 | Impacto: BAJO
+  * Retraso Proveedor        : p_v,j = 0.9225 | Impacto: BAJO
+  * Clima Adverso            : p_v,j = 0.9453 | Impacto: BAJO
+  * Es Feriado               : p_v,j = 0.9500 | Impacto: BAJO
+  * Es Fin Semana            : p_v,j = 0.9410 | Impacto: BAJO
+  * Stock Bajo               : p_v,j = 0.2375 | Impacto: ALTO
+
+8.3 Criterio de Información Bayesiano (BIC) - Autoevaluación:
+  * BIC Score                   : -2259.36
+  * Log-Verosimilitud LL(P|D)   : -2234.06
+  * Muestras de entrenamiento   : 1380
+  * Fórmula: BIC(P|D) = LL(P|D) - (log|D|/2) · C(P)
+
+8.4 Eficiencia de Penalización Lineal vs Exponencial:
+  * Parámetros Noisy-OR (|pa(v)|+1)    : 7
+  * Parámetros CPT Exponencial (2^|pa|): 63
+  * Reducción de complejidad           : 63 → 7 (88.9% reducción)
+  Esta reducción permite operar con datos limitados de PYMEs sin sobreajuste.
+
+8.5 Evaluación de Riesgo por Producto (Noisy-OR):
+Producto                       | P(Quiebre)   | Nivel      | Causas Activas                
+------------------------------------------------------------------------------------------
+Inca Kola 500ml                |     80.0%   | CRITICO    | ninguna                       
+Coca Cola 500ml                |     80.0%   | CRITICO    | ninguna                       
+Agua San Luis 625ml            |     80.0%   | CRITICO    | ninguna                       
+Yogurt Gloria 1L               |     80.0%   | CRITICO    | ninguna                       
+Leche Gloria 1L                |     80.0%   | CRITICO    | ninguna                       
+Lays 42g                       |     80.0%   | CRITICO    | ninguna                       
+Doritos 42g                    |     80.0%   | CRITICO    | ninguna                       
+InkaChips 40g                  |     80.0%   | CRITICO    | ninguna                       
+Sublime 30g                    |     80.0%   | CRITICO    | ninguna                       
+Pan de Molde Bimbo 500g        |     80.0%   | CRITICO    | ninguna                       
+Arroz Costeño 1kg              |     80.0%   | CRITICO    | ninguna                       
+Aceite Primor 1L               |     80.0%   | CRITICO    | ninguna                       
+Fideos Don Vittorio 500g       |     80.0%   | CRITICO    | ninguna                       
+Atún Florida 170g              |     80.0%   | CRITICO    | ninguna                       
+Detergente Ariel 500g          |     80.0%   | CRITICO    | ninguna                       
+
+9. ALGORITMOS DE BÚSQUEDA NO INFORMADA E INFORMADA (SÍLABO: BFS, DFS, A*)
+------------------------------------------------------------------------
+Para dar cumplimiento estricto al sílabo del curso y potenciar la toma de
+decisiones en el ciclo Sense-Plan-Act del Actuador, se incorporaron 3 algoritmos:
+
+9.1 Búsqueda No Informada en Árbol de Categorías (BFS vs DFS):
+  * BFS (Breadth-First Search / Cola FIFO) : Recorre 30 nodos por niveles.
+    Garantiza la inspección equitativa nivel por nivel de todas las categorías.
+  * DFS (Depth-First Search / Pila LIFO)  : Recorre 30 nodos en profundidad.
+    Permite la auditoría completa rama por rama de cada categoría de producto.
+
+9.2 Algoritmo de Búsqueda Informada A* (Paarth Sonkiya, 2024):
+  * Función de Evaluación: f(n) = g(n) + h(n)
+  * Heurística h(n): Distancia Manhattan d(P1, P2) = |x2 - x1| + |y2 - y1|
+  * Costo Real Acumulado g(n)             : 18.00
+  * Costo Heurístico Acumulado h(n)       : 0.00
+  * Evaluación Total de Ruta f(n)         : 18.00
+
+9.3 Priorización Estratégica de Pedidos (A* Ranking f(n)):
+Producto                  | Alerta             | Prob. Riesgo | Costo g(n) | Heur. h(n) | Prioridad f(n)
+-----------------------------------------------------------------------------------------------
+prod_001                  | RIESGO_BAYESIANO   |       80.0% |      30.00 |      80.00 |       110.00
+prod_002                  | RIESGO_BAYESIANO   |       80.0% |      30.00 |      80.00 |       110.00
+prod_003                  | RIESGO_BAYESIANO   |       80.0% |      30.00 |      80.00 |       110.00
+prod_004                  | RIESGO_BAYESIANO   |       80.0% |      30.00 |      80.00 |       110.00
+prod_005                  | RIESGO_BAYESIANO   |       80.0% |      30.00 |      80.00 |       110.00
+
+========================================================================
+Fin del reporte de control de stock y optimización de ventas.
+========================================================================
