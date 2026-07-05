@@ -1,8 +1,0 @@
-pandas
-numpy
-prophet
-scikit-learn
-matplotlib
-
-# ejecutar este comando para instalar todas las librerias:
-# pip install -r requirements.txt

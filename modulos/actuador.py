@@ -174,7 +174,7 @@ class ActuadorOptimizado:
         Ejecuta la búsqueda de productos en la estructura jerárquica de categorías
         usando los algoritmos BFS (Anchura) y DFS (Profundidad).
         """
-        from busqueda import ArbolCategorias
+        from modulos.busqueda import ArbolCategorias
         arbol = ArbolCategorias()
         arbol.construir_desde_dataframe(df_inventario)
 
@@ -193,7 +193,7 @@ class ActuadorOptimizado:
         1. Priorización estratégica de pedidos con f(n) = g(n) + h(n).
         2. Optimización de la ruta de reabastecimiento en almacén usando Distancia Manhattan.
         """
-        from busqueda import OptimizadorAEstrella
+        from modulos.busqueda import OptimizadorAEstrella
         optimizador = OptimizadorAEstrella(df_inventario=df_inventario)
 
         # 1. Priorización estratégica de órdenes de compra

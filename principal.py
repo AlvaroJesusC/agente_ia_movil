@@ -20,11 +20,9 @@ if hasattr(sys.stdout, 'reconfigure'):
     except Exception:
         pass
 
-# Módulos locales
-import sensor
-import cerebro
-import actuador
-import reportador
+# Módulos locales organizados en la carpeta modulos
+from modulos import sensor, cerebro, actuador, busqueda, reportador
+from modulos.poda_alfa_beta import EvaluadorPodaAlfaBeta, EstadoInventario
 
 class Spinner:
     def __init__(self, message="Procesando..."):
@@ -71,8 +69,8 @@ def ejecutar_agente():
     spinner = Spinner("[SENSOR] Cargando datos desde archivos CSV...")
     spinner.start()
     try:
-        df_ventas = sensor.cargar_ventas("csv/ventas_datasL.csv")
-        df_inventario = sensor.cargar_inventario("csv/inventario_datasL.csv")
+        df_ventas = sensor.cargar_ventas("datos/ventas_datasL.csv")
+        df_inventario = sensor.cargar_inventario("datos/inventario_datasL.csv")
         
         # Filtrado defensivo: conservar solo marzo, abril, mayo
         df_ventas = df_ventas[df_ventas["fecha"] <= pd.to_datetime("2026-05-31")].copy()
@@ -500,16 +498,16 @@ def ejecutar_agente():
     for col in columnas_bool_inventario:
         df_inventario[col] = df_inventario[col].map({True: "VERDADERO", False: "FALSO"}).fillna("FALSO")
         
-    df_ventas.to_csv("csv/ventas_datasL.csv", index=False, encoding="utf-8")
-    df_inventario.to_csv("csv/inventario_datasL.csv", index=False, encoding="utf-8")
+    df_ventas.to_csv("datos/ventas_datasL.csv", index=False, encoding="utf-8")
+    df_inventario.to_csv("datos/inventario_datasL.csv", index=False, encoding="utf-8")
     spinner.stop()
     print("✔ [SENSOR] Archivos CSV actualizados guardados con éxito.")
  
     # evaluación de Septiembre
     spinner = Spinner("[SENSOR] Cargando datos completos para pronóstico de Septiembre...")
     spinner.start()
-    datos_ventas_completos = sensor.cargar_ventas("csv/ventas_datasL.csv")
-    datos_inventario_completos = sensor.cargar_inventario("csv/inventario_datasL.csv")
+    datos_ventas_completos = sensor.cargar_ventas("datos/ventas_datasL.csv")
+    datos_inventario_completos = sensor.cargar_inventario("datos/inventario_datasL.csv")
     ventas_diarias_completas = sensor.obtener_ventas_diarias_completas(datos_ventas_completos)
     
     ultima_fecha_simulada = datos_inventario_completos["fecha"].max()
@@ -550,6 +548,38 @@ def ejecutar_agente():
     spinner.stop()
     print("✔ [ACTUADOR] Algoritmos de búsqueda BFS, DFS y A* ejecutados con éxito.")
 
+    # Ejecución de Poda Alfa-Beta (Entrega 3: Minimax con Poda Alpha-Beta)
+    spinner = Spinner("[CEREBRO] Ejecutando algoritmo Poda Alfa-Beta para optimización de decisiones...")
+    spinner.start()
+    evaluador_poda = EvaluadorPodaAlfaBeta()
+    resultados_poda_alfa_beta = []
+
+    for _, fila in inventario_final_agosto.iterrows():
+        prod_id = fila["producto_id"]
+        prod_nombre = fila["producto_nombre"]
+        pred_fut = diccionario_predicciones_futuras[prod_id]
+        demanda_prom_diaria = pred_fut["demanda_predicha"].mean() if len(pred_fut) > 0 else 5.0
+
+        estado_prod = EstadoInventario(
+            stock_actual=fila["stock_fisico"],
+            demanda_diaria_prom=demanda_prom_diaria,
+            costo_unidad=fila["precio_unitario"] * 0.65,
+            precio_venta=fila["precio_unitario"],
+            dias_vencimiento=fila["vida_util_dias"] if fila["es_perecedero"] else 999,
+            es_perecedero=fila["es_perecedero"],
+            lead_time_base=int(fila["tiempo_reposicion_dias"])
+        )
+
+        res_poda = evaluador_poda.optimizar_decision(prod_id, prod_nombre, estado_prod, profundidad=3)
+        resultados_poda_alfa_beta.append(res_poda)
+
+    spinner.stop()
+    print("✔ [CEREBRO] Algoritmo Poda Alfa-Beta ejecutado con éxito.")
+    if resultados_poda_alfa_beta:
+        eficiencia_media = np.mean([r["eficiencia_poda_pct"] for r in resultados_poda_alfa_beta])
+        print(f"   * Productos optimizados: {len(resultados_poda_alfa_beta)}")
+        print(f"   * Eficiencia promedio de poda (α-β): {eficiencia_media:.1f}% de nodos podados")
+
     # reportes gráficos y escritos
     spinner = Spinner("[REPORTADOR] Generando reportes gráficos y escritos finales...")
     spinner.start()
@@ -565,6 +595,7 @@ def ejecutar_agente():
     reportador.graficar_red_bayesiana(red_bayesiana, inventario_final_agosto, diccionario_predicciones_futuras)
     reportador.graficar_arbol_categorias_bfs_dfs(busqueda_res)
     reportador.graficar_ruta_reabastecimiento_astar(astar_res)
+    reportador.graficar_resultados_poda_alfa_beta(resultados_poda_alfa_beta)
     
     generar_reporte_escrito_final(
         inventario_final_agosto, alertas_septiembre, diccionario_predicciones_futuras, datos_ventas_completos,
@@ -572,7 +603,8 @@ def ejecutar_agente():
         predicciones_completas=predicciones_completas,
         red_bayesiana=red_bayesiana,
         busqueda_res=busqueda_res,
-        astar_res=astar_res
+        astar_res=astar_res,
+        resultados_poda=resultados_poda_alfa_beta
     )
     spinner.stop()
     print("✔ [REPORTADOR] Reportes finales generados con éxito.")
@@ -580,10 +612,16 @@ def ejecutar_agente():
     print("\n" + "=" * 75)
     print("   ¡AGENTE PREDICTIVO Y SIMULACIÓN COMPLETA COMPLETADA CON ÉXITO!")
     print("=" * 75)
-    print("Los reportes visuales consolidados han sido guardados en 'reportes/'.")
+    print("Los reportes visuales consolidados han sido guardados en 'reportes/'")
+    print("organizados en carpetas temáticas:")
+    print("  📁 01_algoritmos_busqueda_grafos/   (BFS, DFS y A*)")
+    print("  📁 02_redes_bayesiana_causal/       (DAG, Métricas BIC, Mapa de Calor)")
+    print("  📁 03_prediccion_prophet_mlp/       (Series Temporales y Patrones Horarios)")
+    print("  📁 04_alertas_y_eventos/            (Dashboard, Impacto Feriados y Tablas)")
+    print("  📁 05_poda_alfa_beta/               (Nodos Evaluados, Eficiencia y Matriz Utilidad)")
     print("=" * 75)
 
-def generar_reporte_escrito_final(inventario_actual, alertas, predicciones, datos_ventas, total_pedidos, quiebres_prev, mermas_prev, predicciones_completas=None, red_bayesiana=None, busqueda_res=None, astar_res=None, ruta_salida="reportes/reporte_ejecucion.txt"):
+def generar_reporte_escrito_final(inventario_actual, alertas, predicciones, datos_ventas, total_pedidos, quiebres_prev, mermas_prev, predicciones_completas=None, red_bayesiana=None, busqueda_res=None, astar_res=None, resultados_poda=None, ruta_salida="reportes/reporte_ejecucion.txt"):
     # Genera el archivo consolidado de reporte escrito en disco.
     with open(ruta_salida, "w", encoding="utf-8") as archivo:
         archivo.write("========================================================================\n")
@@ -802,6 +840,73 @@ def generar_reporte_escrito_final(inventario_actual, alertas, predicciones, dato
             archivo.write("-" * 95 + "\n")
             for ord_a in ordenes_astar[:5]:
                 archivo.write(f"{ord_a['producto_id']:<25} | {ord_a['tipo_alerta']:<18} | {ord_a['probabilidad_riesgo']*100:>10.1f}% | {ord_a['costo_g']:>10.2f} | {ord_a['heuristica_h']:>10.2f} | {ord_a['evaluacion_f']:>12.2f}\n")
+
+        # Sección 10: Algoritmo Poda Alfa-Beta (Entrega 3)
+        if resultados_poda is not None:
+            archivo.write("\n10. OPTIMIZACIÓN DE DECISIONES DE REABASTECIMIENTO (PODA ALFA-BETA / MINIMAX)\n")
+            archivo.write("------------------------------------------------------------------------\n")
+            archivo.write("Se aplicó la Poda Alfa-Beta sobre un modelo de árbol de decisiones adversariales\n")
+            archivo.write("donde el Agente (MAX) busca maximizar el margen de utilidad neta y el Entorno (MIN)\n")
+            archivo.write("evalúa escenarios de alta demanda, retrasos de proveedor y crisis de inventario.\n\n")
+
+            archivo.write("JUSTIFICACIÓN TEÓRICA DEL JUGADOR MIN (MERCADO / ENTORNO):\n")
+            archivo.write("  En la gestión de inventarios bajo incertidumbre, el mercado y los proveedores se modelan\n")
+            archivo.write("  como un jugador adversarial (MIN) no porque tengan una intención real o maliciosa de perjudicar\n")
+            archivo.write("  a la bodega, sino porque representa la metodología formal del Criterio Minimax de Decisión\n")
+            archivo.write("  bajo Incertidumbre. Al asumir que el entorno seleccionará la combinación de eventos más desfavorable\n")
+            archivo.write("  (picos de demanda, retrasos logísticos o crisis de inventario), el Agente (MAX) está forzado a\n")
+            archivo.write("  planificar una estrategia ROBUSTAMENTE ÓPTIMA. Esta aproximación garantiza que, incluso ante el peor\n")
+            archivo.write("  escenario posible, las pérdidas se minimizan y la continuidad operativa se protege de manera estable.\n\n")
+
+            eficiencia_prom = np.mean([r["eficiencia_poda_pct"] for r in resultados_poda]) if resultados_poda else 0
+            prof_eval = resultados_poda[0].get("profundidad_evaluada", 2) if resultados_poda else 2
+            archivo.write(f"10.1 Métricas Generales de Poda Alpha-Beta:\n")
+            archivo.write(f"  * Total Productos Evaluados      : {len(resultados_poda)}\n")
+            archivo.write(f"  * Profundidad del Árbol (Días)  : {prof_eval} niveles de decisiones encadenadas en el tiempo\n")
+            archivo.write(f"  * Eficiencia Promedio de Poda    : {eficiencia_prom:.1f}% de nodos podados del árbol\n")
+            archivo.write(f"  * Reducción de Complejidad      : Permite evaluar decisiones multietapa a N días en tiempo real.\n\n")
+
+            archivo.write("10.2 Decisiones Estratégicas Seleccionadas por Producto:\n")
+            archivo.write(f"{'Producto':<30} | {'Acción Óptima':<18} | {'Utilidad Est.':<15} | {'Poda α-β (%)':<12}\n")
+            archivo.write("-" * 85 + "\n")
+            for res in resultados_poda:
+                archivo.write(f"{res['producto_nombre']:<30} | {res['mejor_accion']:<18} | S/. {res['utilidad_optima']:>10,.2f} | {res['eficiencia_poda_pct']:>10.1f}%\n")
+
+            archivo.write("\n10.3 Aclaración Teórica sobre la Matriz de Utilidades Graficada:\n")
+            archivo.write("  * La matriz gráfica exhibe las utilidades inmediatas del paso 1 (Día 1, U_1).\n")
+            archivo.write("  * En el Día 1, la compra de stock incurre en un costo inicial, haciendo parecer superficialmente desfavorables\n")
+            archivo.write("    las acciones de reabastecimiento si solo se observara dicho primer día.\n")
+            archivo.write(f"  * No obstante, la Decisión Óptima surge del Minimax propagado a {prof_eval} días de horizonte (D={prof_eval}),\n")
+            archivo.write("    donde disponer del stock reabastecido previene colapsos por quiebre y multas críticas en los días 2 y 3.\n")
+            archivo.write("  * Se aplica un factor de descuento gamma = 0.95 a las utilidades de los días futuros dentro del árbol multietapa,\n")
+            archivo.write("    reflejando la preferencia estándar en modelos de decisión secuencial por resultados más cercanos en el tiempo\n")
+            archivo.write("    frente a proyecciones inciertas más lejanas.\n\n")
+
+            archivo.write("10.4 Demostración Numérica Detallada Paso a Paso (Ejemplo: Inca Kola 500ml):\n")
+            archivo.write(f"{'Acción Día 1':<18} | {'Peor Esc. MIN':<18} | {'U1 (Día 1)':<12} | {'Stock S2':<10} | {'Acción Día 2':<16} | {'Subárbol D2-D3':<14} | {'Total Acumulado':<15}\n")
+            archivo.write("-" * 115 + "\n")
+            
+            # Obtener traza explicativa de Inca Kola
+            if resultados_poda:
+                first_item = resultados_poda[0]
+                evaluador_aux = EvaluadorPodaAlfaBeta()
+                sub_inv = inventario_actual[inventario_actual["producto_id"] == first_item["producto_id"]]
+                if not sub_inv.empty:
+                    meta_ik = sub_inv.iloc[0]
+                    pred_ik = predicciones.get(first_item["producto_id"], pd.DataFrame())
+                    dem_prom_ik = pred_ik["demanda_predicha"].mean() if not pred_ik.empty else 22.0
+                    st_ik = EstadoInventario(
+                        stock_actual=meta_ik["stock_fisico"],
+                        demanda_diaria_prom=dem_prom_ik,
+                        costo_unidad=meta_ik["precio_unitario"] * 0.65,
+                        precio_venta=meta_ik["precio_unitario"],
+                        dias_vencimiento=meta_ik["vida_util_dias"] if meta_ik["es_perecedero"] else 999,
+                        es_perecedero=meta_ik["es_perecedero"],
+                        lead_time_base=int(meta_ik["tiempo_reposicion_dias"])
+                    )
+                    df_tr = evaluador_aux.generar_traza_explicativa(first_item["producto_nombre"], st_ik, profundidad=3)
+                    for _, row in df_tr.iterrows():
+                        archivo.write(f"{row['accion_d1']:<18} | {row['escenario_d1']:<18} | S/. {row['u1_inmediata']:>7.2f}  | {row['stock_s2']:>8.1f}  | {row['accion_d2_optima']:<16} | S/. {row['subarbol_d2_d3']:>9.2f}  | S/. {row['total_acumulado']:>10.2f}\n")
 
         archivo.write("\n========================================================================\n")
         archivo.write("Fin del reporte de control de stock y optimización de ventas.\n")

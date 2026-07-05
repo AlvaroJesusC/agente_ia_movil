@@ -28,8 +28,16 @@ COLOR_EXITO = "#28B463"
 COLOR_FONDO_GRID = "#F4F6F7"
 
 def asegurar_directorio_reportes(directorio="reportes"):
-    if not os.path.exists(directorio):
-        os.makedirs(directorio)
+    subcarpetas = [
+        directorio,
+        os.path.join(directorio, "01_algoritmos_busqueda_grafos"),
+        os.path.join(directorio, "02_redes_bayesiana_causal"),
+        os.path.join(directorio, "03_prediccion_prophet_mlp"),
+        os.path.join(directorio, "04_alertas_y_eventos")
+    ]
+    for folder in subcarpetas:
+        if not os.path.exists(folder):
+            os.makedirs(folder)
 
 def graficar_demanda_y_alertas(df_inventario, dict_predicciones, lista_alertas, directorio="reportes"):
     # Compara stock físico/total con la demanda proyectada para productos con alertas críticas.
@@ -97,7 +105,7 @@ def graficar_demanda_y_alertas(df_inventario, dict_predicciones, lista_alertas, 
         fig.delaxes(axes[j])
         
     plt.tight_layout()
-    plt.savefig(os.path.join(directorio, "proyeccion_demanda_vs_stock.png"), dpi=150, bbox_inches="tight")
+    plt.savefig(os.path.join(directorio, "03_prediccion_prophet_mlp", "proyeccion_demanda_vs_stock.png"), dpi=150, bbox_inches="tight")
     plt.close()
 
 def graficar_patrones_horas_pico(df_inventario, dict_patrones, directorio="reportes"):
@@ -129,7 +137,7 @@ def graficar_patrones_horas_pico(df_inventario, dict_patrones, directorio="repor
     plt.xticks(range(24))
     plt.grid(True)
     plt.legend(fontsize=10, loc="upper left")
-    plt.savefig(os.path.join(directorio, "patron_horas_pico.png"), dpi=150, bbox_inches="tight")
+    plt.savefig(os.path.join(directorio, "03_prediccion_prophet_mlp", "patron_horas_pico.png"), dpi=150, bbox_inches="tight")
     plt.close()
 
 def graficar_productos_mas_demandados(df_ventas, directorio="reportes"):
@@ -159,7 +167,7 @@ def graficar_productos_mas_demandados(df_ventas, directorio="reportes"):
     plt.xlabel("Total de Unidades Vendidas", fontsize=11)
     plt.ylabel("Categoría", fontsize=11)
     plt.grid(axis='x', linestyle='--', alpha=0.7)
-    plt.savefig(os.path.join(directorio, "productos_mas_demandados_categoria.png"), dpi=150, bbox_inches="tight")
+    plt.savefig(os.path.join(directorio, "03_prediccion_prophet_mlp", "productos_mas_demandados_categoria.png"), dpi=150, bbox_inches="tight")
     plt.close()
 
 def generar_dashboard_alertas(lista_alertas, directorio="reportes"):
@@ -211,7 +219,7 @@ def generar_dashboard_alertas(lista_alertas, directorio="reportes"):
                  fontsize=10, fontstyle="italic", ha="center", color="#7F8C8D")
         
     plt.tight_layout()
-    plt.savefig(os.path.join(directorio, "dashboard_alertas.png"), dpi=150, bbox_inches="tight")
+    plt.savefig(os.path.join(directorio, "04_alertas_y_eventos", "dashboard_alertas.png"), dpi=150, bbox_inches="tight")
     plt.close()
 
 def graficar_analisis_eventos(df_ventas, directorio="reportes"):
@@ -260,7 +268,7 @@ def graficar_analisis_eventos(df_ventas, directorio="reportes"):
     plt.grid(axis='y', linestyle='--', alpha=0.7)
     plt.legend(loc="upper left")
     plt.tight_layout()
-    plt.savefig(os.path.join(directorio, "analisis_eventos_especiales.png"), dpi=150, bbox_inches="tight")
+    plt.savefig(os.path.join(directorio, "04_alertas_y_eventos", "analisis_eventos_especiales.png"), dpi=150, bbox_inches="tight")
     plt.close()
 
 def graficar_dispersion_ventas(df_ventas, directorio="reportes"):
@@ -318,7 +326,7 @@ def graficar_dispersion_ventas(df_ventas, directorio="reportes"):
     
     plt.suptitle("Análisis de Dispersión de Ventas (Factores de Clima y Precio)", fontsize=14, fontweight="bold", color=COLOR_PRIMARIO, y=0.98)
     plt.tight_layout()
-    plt.savefig(os.path.join(directorio, "dispersion_ventas.png"), dpi=150, bbox_inches="tight")
+    plt.savefig(os.path.join(directorio, "04_alertas_y_eventos", "dispersion_ventas.png"), dpi=150, bbox_inches="tight")
     plt.close()
 
 def graficar_dispersion_inventario(df_inventario, directorio="reportes"):
@@ -355,7 +363,7 @@ def graficar_dispersion_inventario(df_inventario, directorio="reportes"):
     
     plt.suptitle("Análisis de Dispersión de Inventario (Políticas de Reposición y Quiebres)", fontsize=14, fontweight="bold", color=COLOR_PRIMARIO, y=0.98)
     plt.tight_layout()
-    plt.savefig(os.path.join(directorio, "dispersion_inventario.png"), dpi=150, bbox_inches="tight")
+    plt.savefig(os.path.join(directorio, "04_alertas_y_eventos", "dispersion_inventario.png"), dpi=150, bbox_inches="tight")
     plt.close()
 
 def graficar_tabla_proyeccion_septiembre(inventario_actual, alertas, predicciones, directorio="reportes"):
@@ -411,7 +419,7 @@ def graficar_tabla_proyeccion_septiembre(inventario_actual, alertas, prediccione
                     
     plt.title("Proyección de Demanda - Primeros 7 Días de Septiembre", fontsize=12, fontweight="bold", color=COLOR_PRIMARIO, y=0.98)
     plt.tight_layout()
-    plt.savefig(os.path.join(directorio, "tabla_proyeccion_septiembre.png"), dpi=150, bbox_inches="tight")
+    plt.savefig(os.path.join(directorio, "04_alertas_y_eventos", "tabla_proyeccion_septiembre.png"), dpi=150, bbox_inches="tight")
     plt.close()
 
 def graficar_tabla_impacto_eventos(datos_ventas, directorio="reportes"):
@@ -468,7 +476,7 @@ def graficar_tabla_impacto_eventos(datos_ventas, directorio="reportes"):
                     
     plt.title("Impacto de Eventos Especiales en las Ventas Diarias", fontsize=12, fontweight="bold", color=COLOR_PRIMARIO, y=0.98)
     plt.tight_layout()
-    plt.savefig(os.path.join(directorio, "tabla_impacto_eventos.png"), dpi=150, bbox_inches="tight")
+    plt.savefig(os.path.join(directorio, "04_alertas_y_eventos", "tabla_impacto_eventos.png"), dpi=150, bbox_inches="tight")
     plt.close()
 
 def graficar_red_bayesiana(red_bayesiana, df_inventario, dict_predicciones, directorio="reportes"):
@@ -624,7 +632,7 @@ def graficar_red_bayesiana(red_bayesiana, df_inventario, dict_predicciones, dire
     ax_graph.set_title("Grafo Aciclico Dirigido (DAG) - Red Bayesiana Mixta", fontsize=15, fontweight="bold", color=COLOR_PRIMARIO, pad=15)
     
     plt.tight_layout()
-    fig_g.savefig(os.path.join(directorio, "red_bayesiana_grafo.png"), dpi=150, bbox_inches="tight")
+    fig_g.savefig(os.path.join(directorio, "02_redes_bayesiana_causal", "red_bayesiana_grafo.png"), dpi=150, bbox_inches="tight")
     plt.close(fig_g)
     
     # ----------------------------------------------------
@@ -658,7 +666,7 @@ def graficar_red_bayesiana(red_bayesiana, df_inventario, dict_predicciones, dire
     ax_bic.set_title("Optimizacion de Complejidad y BIC", fontsize=14, fontweight="bold", color=COLOR_PRIMARIO, pad=15)
     
     plt.tight_layout()
-    fig_m.savefig(os.path.join(directorio, "red_bayesiana_metricas.png"), dpi=150, bbox_inches="tight")
+    fig_m.savefig(os.path.join(directorio, "02_redes_bayesiana_causal", "red_bayesiana_metricas.png"), dpi=150, bbox_inches="tight")
     plt.close(fig_m)
     
     # ----------------------------------------------------
@@ -737,7 +745,7 @@ def graficar_red_bayesiana(red_bayesiana, df_inventario, dict_predicciones, dire
     cbar.set_label("Probabilidad de Quiebre de Stock", fontsize=11)
     
     plt.tight_layout()
-    fig_h.savefig(os.path.join(directorio, "red_bayesiana_mapa_calor.png"), dpi=150, bbox_inches="tight")
+    fig_h.savefig(os.path.join(directorio, "02_redes_bayesiana_causal", "red_bayesiana_mapa_calor.png"), dpi=150, bbox_inches="tight")
     plt.close(fig_h)
 
 
@@ -770,7 +778,7 @@ def graficar_arbol_categorias_bfs_dfs(resultado_busqueda, directorio="reportes")
 
     plt.suptitle("Algoritmos de Búsqueda No Informada en Árbol de Inventario (Sílabo)", fontsize=14, fontweight="bold", y=1.02)
     plt.tight_layout()
-    fig.savefig(os.path.join(directorio, "arbol_categorias_bfs_dfs.png"), dpi=150, bbox_inches="tight")
+    fig.savefig(os.path.join(directorio, "01_algoritmos_busqueda_grafos", "arbol_categorias_bfs_dfs.png"), dpi=150, bbox_inches="tight")
     plt.close(fig)
 
 
@@ -830,5 +838,116 @@ def graficar_ruta_reabastecimiento_astar(resultado_astar, directorio="reportes")
     ax.legend(loc="lower right", fontsize=9)
 
     plt.tight_layout()
-    fig.savefig(os.path.join(directorio, "ruta_reabastecimiento_astar.png"), dpi=150, bbox_inches="tight")
+    fig.savefig(os.path.join(directorio, "01_algoritmos_busqueda_grafos", "ruta_reabastecimiento_astar.png"), dpi=150, bbox_inches="tight")
     plt.close(fig)
+
+
+def graficar_resultados_poda_alfa_beta(resultados_poda, directorio="reportes"):
+    """
+    Genera los gráficos de resultados para el Algoritmo Poda Alfa-Beta:
+    1. 'poda_alfa_beta_eficiencia.png': Muestra nodos visitados vs podados y % de eficiencia.
+    2. 'poda_alfa_beta_matriz_utilidad.png': Visualiza la matriz de utilidades por acción y escenario.
+    """
+    asegurar_directorio_reportes(directorio)
+    subcarpeta_poda = os.path.join(directorio, "05_poda_alfa_beta")
+    if not os.path.exists(subcarpeta_poda):
+        os.makedirs(subcarpeta_poda, exist_ok=True)
+
+    if not resultados_poda:
+        return
+
+    # 1. Gráfico de Eficiencia y Nodos
+    fig1, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 6))
+    fig1.patch.set_facecolor("#FFFFFF")
+
+    nombres = [item["producto_nombre"] for item in resultados_poda]
+    visitados = [item["nodos_visitados"] for item in resultados_poda]
+    podados = [item["nodos_podados"] for item in resultados_poda]
+    eficiencias = [item["eficiencia_poda_pct"] for item in resultados_poda]
+
+    x = np.arange(len(nombres))
+    width = 0.35
+
+    rects1 = ax1.bar(x - width/2, visitados, width, label="Nodos Visitados", color=COLOR_PRIMARIO)
+    rects2 = ax1.bar(x + width/2, podados, width, label="Nodos Podados", color=COLOR_ALERTA_ALTA)
+
+    ax1.set_ylabel("Cantidad de Nodos Evaluados", fontsize=10, fontweight="bold")
+    ax1.set_title("Nodos Visitados vs. Nodos Podados por Producto", fontsize=11, fontweight="bold", color=COLOR_PRIMARIO)
+    ax1.set_xticks(x)
+    ax1.set_xticklabels(nombres, rotation=45, ha="right", fontsize=9)
+    ax1.legend(loc="upper right")
+    ax1.grid(True, linestyle="--", alpha=0.4)
+
+    # Gráfico de Eficiencia (%)
+    ax2.bar(nombres, eficiencias, color=COLOR_EXITO, alpha=0.85)
+    ax2.set_ylabel("Porcentaje de Eficiencia de Poda (%)", fontsize=10, fontweight="bold")
+    ax2.set_title("Porcentaje de Reducción del Árbol de Búsqueda (Eficiencia α-β)", fontsize=11, fontweight="bold", color=COLOR_PRIMARIO)
+    ax2.set_xticklabels(nombres, rotation=45, ha="right", fontsize=9)
+    ax2.set_ylim(0, 100)
+    ax2.grid(True, linestyle="--", alpha=0.4)
+
+    for i, v in enumerate(eficiencias):
+        ax2.text(i, v + 2, f"{v}%", ha="center", fontweight="bold", fontsize=9)
+
+    plt.suptitle("Rendimiento del Algoritmo Poda Alfa-Beta en Decisiones de Inventario", fontsize=13, fontweight="bold", y=1.02)
+    plt.tight_layout()
+    fig1.savefig(os.path.join(subcarpeta_poda, "poda_alfa_beta_eficiencia.png"), dpi=150, bbox_inches="tight")
+    plt.close(fig1)
+
+    # 2. Matriz de Utilidades para el primer producto representativo
+    primer_res = resultados_poda[0]
+    df_matriz = primer_res["matriz_evaluacion"]
+    prod_nombre = primer_res["producto_nombre"]
+
+    fig2, ax_mat = plt.subplots(figsize=(11, 6.2))
+    fig2.patch.set_facecolor("#FFFFFF")
+    ax_mat.axis("off")
+
+    col_labels = ["Acción Agente (MAX)"] + [col for col in df_matriz.columns if col != "accion"]
+    cell_text = []
+
+    for _, row in df_matriz.iterrows():
+        fila_txt = [row["accion"]]
+        for col in df_matriz.columns:
+            if col != "accion":
+                val = row[col]
+                fila_txt.append(f"S/. {val:,.2f}")
+        cell_text.append(fila_txt)
+
+    tabla = ax_mat.table(cellText=cell_text, colLabels=col_labels, loc="upper center", cellLoc="center")
+    tabla.auto_set_font_size(False)
+    tabla.set_fontsize(9.5)
+    tabla.scale(1.2, 1.7)
+
+    # Dar formato a la tabla
+    for (row, col), cell in tabla.get_celld().items():
+        if row == 0:
+            cell.set_facecolor(COLOR_PRIMARIO)
+            cell.set_text_props(color="white", fontweight="bold")
+        else:
+            if col == 0:
+                cell.set_facecolor("#F2F4F7")
+                cell.set_text_props(fontweight="bold")
+            else:
+                cell.set_facecolor("#FFFFFF")
+
+    prof = primer_res.get("profundidad_evaluada", 3)
+    ax_mat.set_title(f"Matriz de Utilidades Inmediatas (Día 1): {prod_nombre}\n"
+                      f"Acción Óptima Seleccionada tras árbol a D={prof} días: {primer_res['mejor_accion']} "
+                      f"(Utilidad Óptima Acumulada: S/. {primer_res['utilidad_optima']:,.2f})",
+                      fontsize=11, fontweight="bold", color=COLOR_PRIMARIO, pad=20)
+
+    # Agregar nota aclaratoria teórica para la sustentación
+    nota_txt = (
+        f"[*] NOTA EXPLICATIVA PARA SUSTENTACIÓN:\n"
+        f"• Esta tabla muestra la utilidad inmediata de 1 paso (Día 1, U₁). La compra en el Día 1 incurre en un costo inicial de inventario.\n"
+        f"• La decisión óptima '{primer_res['mejor_accion']}' surge de evaluar el árbol multietapa completo a {prof} días (D={prof}).\n"
+        f"• Reabastecer en el Día 1 absorbe el costo inicial pero previene quiebres de stock severos y penalizaciones en los Días 2 y 3."
+    )
+    fig2.text(0.5, 0.04, nota_txt, ha="center", fontsize=8.5, color="#1E293B",
+              bbox=dict(boxstyle="round,pad=0.6", facecolor="#FEF3C7", edgecolor="#F59E0B", alpha=0.95))
+
+    plt.tight_layout()
+    fig2.savefig(os.path.join(subcarpeta_poda, "poda_alfa_beta_matriz_utilidad.png"), dpi=150, bbox_inches="tight")
+    plt.close(fig2)
+

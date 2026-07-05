@@ -6,7 +6,7 @@
 import pandas as pd
 import numpy as np
 
-def cargar_ventas(ruta_archivo="csv/ventas_datasL.csv"):
+def cargar_ventas(ruta_archivo="datos/ventas_datasL.csv"):
     # Carga el archivo de ventas y formatea las columnas de fecha y booleanos.
     datos_ventas = pd.read_csv(ruta_archivo, encoding="utf-8")
     
@@ -25,7 +25,7 @@ def cargar_ventas(ruta_archivo="csv/ventas_datasL.csv"):
             
     return datos_ventas
 
-def cargar_inventario(ruta_archivo="csv/inventario_datasL.csv"):
+def cargar_inventario(ruta_archivo="datos/inventario_datasL.csv"):
     # carga el archivo de inventario y formatea fechas y booleanos.
     datos_inventario = pd.read_csv(ruta_archivo, encoding="utf-8")
     datos_inventario["fecha"] = pd.to_datetime(datos_inventario["fecha"], format="%d/%m/%Y")
