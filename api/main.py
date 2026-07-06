@@ -99,8 +99,8 @@ def inicializar_sistema():
         al_prod = actuador_opt.evaluar_producto(fila, pred_prod, patron_prod, [], red_bayesiana=red_bayesiana)
         alertas.extend(al_prod)
 
-    STATE["df_ventas"] = df_ventas
-    STATE["df_inventario"] = df_inventario
+    STATE["df_ventas"] = df_ventas_full
+    STATE["df_inventario"] = df_inventario_full
     STATE["ventas_diarias"] = ventas_diarias
     STATE["df_festivos"] = df_festivos
     STATE["agente_cerebro"] = agente_cerebro
