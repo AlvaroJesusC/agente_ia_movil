@@ -1,6 +1,6 @@
 ========================================================================
          INFORME DE PREDICCIÓN Y OPTIMIZACIÓN DE INVENTARIO - PYMEVISION AI
-Fecha de Emisión: 05/07/2026 18:21:27
+Fecha de Emisión: 05/07/2026 23:44:48
 ========================================================================
 
 1. RESULTADOS DE LA SIMULACIÓN AUTÓNOMA (JUNIO - AGOSTO 2026)
@@ -312,9 +312,9 @@ decisiones en el ciclo Sense-Plan-Act del Actuador, se incorporaron 3 algoritmos
   * Estrategia: Ruta de Picking con Heurística de Vecino Más Cercano (Nearest Neighbor) + A*
   * Función de Evaluación: f(n) = g(n) + h(n) en cada etapa de recorrido
   * Heurística h(n): Distancia Manhattan d(n, próximo_estante) = |x - x_obj| + |y - y_obj|
-  * Costo Real Acumulado Total g(n)       : 62.00
+  * Costo Real Acumulado Total g(n)       : 48.00
   * Heurística Inicial h(0,0)             : 3.00
-  * Evaluación Total de Ruta f(n)         : 62.00
+  * Evaluación Total de Ruta f(n)         : 48.00
 
 9.3 Priorización Estratégica de Pedidos (A* Ranking f(n)):
 Producto                  | Alerta             | Prob. Riesgo | Costo g(n) | Heur. h(n) | Prioridad f(n)
@@ -343,27 +343,27 @@ JUSTIFICACIÓN TEÓRICA DEL JUGADOR MIN (MERCADO / ENTORNO):
 10.1 Métricas Generales de Poda Alpha-Beta:
   * Total Productos Evaluados      : 15
   * Profundidad del Árbol (Días)  : 3 niveles de decisiones encadenadas en el tiempo
-  * Eficiencia Promedio de Poda    : 39.2% de nodos podados del árbol
+  * Eficiencia Promedio de Poda    : 40.4% de nodos podados del árbol
   * Reducción de Complejidad      : Permite evaluar decisiones multietapa a N días en tiempo real.
 
 10.2 Decisiones Estratégicas Seleccionadas por Producto:
 Producto                       | Acción Óptima      | Utilidad Est.   | Poda α-β (%)
 -------------------------------------------------------------------------------------
-Inca Kola 500ml                | ORDEN_NORMAL       | S/.    -137.91 |       36.1%
-Coca Cola 500ml                | ORDEN_NORMAL       | S/.       0.84 |       38.8%
-Agua San Luis 625ml            | ORDEN_NORMAL       | S/.    -108.95 |       36.0%
-Yogurt Gloria 1L               | MANTENER           | S/.     171.13 |       40.8%
-Leche Gloria 1L                | MANTENER           | S/.     136.00 |       40.5%
-Lays 42g                       | MANTENER           | S/.      61.42 |       41.4%
-Doritos 42g                    | ORDEN_NORMAL       | S/.     -64.27 |       36.8%
-InkaChips 40g                  | MANTENER           | S/.      63.92 |       41.5%
-Sublime 30g                    | ORDEN_NORMAL       | S/.      -1.72 |       36.4%
-Pan de Molde Bimbo 500g        | MANTENER           | S/.     218.10 |       40.3%
-Arroz Costeño 1kg              | ORDEN_NORMAL       | S/.      48.82 |       40.1%
-Aceite Primor 1L               | MANTENER           | S/.       9.75 |       39.6%
-Fideos Don Vittorio 500g       | ORDEN_NORMAL       | S/.     -65.13 |       36.8%
-Atún Florida 170g              | ORDEN_NORMAL       | S/.      60.80 |       41.3%
-Detergente Ariel 500g          | MANTENER           | S/.      57.87 |       41.5%
+Inca Kola 500ml                | ORDEN_NORMAL       | S/.     -32.38 |       39.0%
+Coca Cola 500ml                | ORDEN_NORMAL       | S/.      21.78 |       41.8%
+Agua San Luis 625ml            | ORDEN_NORMAL       | S/.     -33.03 |       39.1%
+Yogurt Gloria 1L               | MANTENER           | S/.      57.07 |       39.0%
+Leche Gloria 1L                | MANTENER           | S/.      60.35 |       41.2%
+Lays 42g                       | MANTENER           | S/.      36.50 |       41.2%
+Doritos 42g                    | ORDEN_NORMAL       | S/.      -5.93 |       39.4%
+InkaChips 40g                  | MANTENER           | S/.      38.64 |       40.3%
+Sublime 30g                    | ORDEN_NORMAL       | S/.       8.14 |       41.8%
+Pan de Molde Bimbo 500g        | MANTENER           | S/.      90.34 |       37.8%
+Arroz Costeño 1kg              | ORDEN_NORMAL       | S/.      25.54 |       41.7%
+Aceite Primor 1L               | ORDEN_NORMAL       | S/.      27.14 |       40.8%
+Fideos Don Vittorio 500g       | ORDEN_NORMAL       | S/.      -3.22 |       39.4%
+Atún Florida 170g              | ORDEN_NORMAL       | S/.      35.39 |       41.8%
+Detergente Ariel 500g          | MANTENER           | S/.      43.70 |       41.7%
 
 10.3 Aclaración Teórica sobre la Matriz de Utilidades Graficada:
   * La matriz gráfica exhibe las utilidades inmediatas del paso 1 (Día 1, U_1).
@@ -378,10 +378,10 @@ Detergente Ariel 500g          | MANTENER           | S/.      57.87 |       41.
 10.4 Demostración Numérica Detallada Paso a Paso (Ejemplo: Inca Kola 500ml):
 Acción Día 1       | Peor Esc. MIN      | U1 (Día 1)   | Stock S2   | Acción Día 2     | Subárbol D2-D3 | Total Acumulado
 -------------------------------------------------------------------------------------------------------------------
-ORDEN_NORMAL       | CRISIS_INVENTARIO  | S/. -136.48  |     54.3  | MANTENER         | S/.    105.26  | S/.     -36.48
-ORDEN_EMERGENCIA   | CRISIS_INVENTARIO  | S/. -197.07  |     79.6  | PROMO_DESCUENTO  | S/.    124.04  | S/.     -79.23
-PROMO_DESCUENTO    | CRISIS_INVENTARIO  | S/.  -89.18  |      0.0  | ORDEN_NORMAL     | S/.   -224.52  | S/.    -302.48
-MANTENER           | CRISIS_INVENTARIO  | S/.  -48.25  |      0.0  | ORDEN_NORMAL     | S/.   -224.52  | S/.    -261.55
+ORDEN_NORMAL       | CRISIS_INVENTARIO  | S/.  -71.00  |     54.3  | ORDEN_NORMAL     | S/.     40.66  | S/.     -32.38
+ORDEN_EMERGENCIA   | CRISIS_INVENTARIO  | S/.  -90.41  |     79.6  | MANTENER         | S/.     41.51  | S/.     -50.97
+PROMO_DESCUENTO    | CRISIS_INVENTARIO  | S/.  -88.85  |      0.0  | ORDEN_NORMAL     | S/.   -115.14  | S/.    -198.23
+MANTENER           | CRISIS_INVENTARIO  | S/.  -71.00  |      0.0  | ORDEN_NORMAL     | S/.   -115.14  | S/.    -180.38
 
 ========================================================================
 Fin del reporte de control de stock y optimización de ventas.
