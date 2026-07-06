@@ -879,15 +879,18 @@ def graficar_resultados_poda_alfa_beta(resultados_poda, directorio="reportes"):
     ax1.grid(True, linestyle="--", alpha=0.4)
 
     # Gráfico de Eficiencia (%)
-    ax2.bar(nombres, eficiencias, color=COLOR_EXITO, alpha=0.85)
+    ax2.bar(x, eficiencias, color=COLOR_EXITO, alpha=0.85)
     ax2.set_ylabel("Porcentaje de Eficiencia de Poda (%)", fontsize=10, fontweight="bold")
     ax2.set_title("Porcentaje de Reducción del Árbol de Búsqueda (Eficiencia α-β)", fontsize=11, fontweight="bold", color=COLOR_PRIMARIO)
+    ax2.set_xticks(x)
     ax2.set_xticklabels(nombres, rotation=45, ha="right", fontsize=9)
-    ax2.set_ylim(0, 100)
+    min_ef = max(0, int(min(eficiencias)) - 5)
+    max_ef = min(100, int(max(eficiencias)) + 8)
+    ax2.set_ylim(min_ef, max_ef)
     ax2.grid(True, linestyle="--", alpha=0.4)
 
     for i, v in enumerate(eficiencias):
-        ax2.text(i, v + 2, f"{v}%", ha="center", fontweight="bold", fontsize=9)
+        ax2.text(i, v + 0.5, f"{v}%", ha="center", fontweight="bold", fontsize=9)
 
     plt.suptitle("Rendimiento del Algoritmo Poda Alfa-Beta en Decisiones de Inventario", fontsize=13, fontweight="bold", y=1.02)
     plt.tight_layout()
@@ -950,4 +953,61 @@ def graficar_resultados_poda_alfa_beta(resultados_poda, directorio="reportes"):
     plt.tight_layout()
     fig2.savefig(os.path.join(subcarpeta_poda, "poda_alfa_beta_matriz_utilidad.png"), dpi=150, bbox_inches="tight")
     plt.close(fig2)
+
+    # 3. Gráfico Consolidado (Combina ambos gráficos en una vista unificada)
+    fig_cons = plt.figure(figsize=(15, 11))
+    fig_cons.patch.set_facecolor("#FFFFFF")
+    gs = fig_cons.add_gridspec(2, 2, height_ratios=[1.1, 1.0])
+
+    ax_c1 = fig_cons.add_subplot(gs[0, 0])
+    ax_c2 = fig_cons.add_subplot(gs[0, 1])
+    ax_c3 = fig_cons.add_subplot(gs[1, :])
+
+    # Subplot 1: Nodos Visitados vs Podados
+    ax_c1.bar(x - width/2, visitados, width, label="Nodos Visitados", color=COLOR_PRIMARIO)
+    ax_c1.bar(x + width/2, podados, width, label="Nodos Podados", color=COLOR_ALERTA_ALTA)
+    ax_c1.set_ylabel("Cantidad de Nodos Evaluados", fontsize=9, fontweight="bold")
+    ax_c1.set_title("Nodos Visitados vs. Nodos Podados por Producto", fontsize=10, fontweight="bold", color=COLOR_PRIMARIO)
+    ax_c1.set_xticks(x)
+    ax_c1.set_xticklabels(nombres, rotation=45, ha="right", fontsize=8)
+    ax_c1.legend(loc="upper right", fontsize=8)
+    ax_c1.grid(True, linestyle="--", alpha=0.4)
+
+    # Subplot 2: % Eficiencia
+    ax_c2.bar(x, eficiencias, color=COLOR_EXITO, alpha=0.85)
+    ax_c2.set_ylabel("Porcentaje de Eficiencia de Poda (%)", fontsize=9, fontweight="bold")
+    ax_c2.set_title("Porcentaje de Reducción del Árbol (Eficiencia α-β)", fontsize=10, fontweight="bold", color=COLOR_PRIMARIO)
+    ax_c2.set_xticks(x)
+    ax_c2.set_xticklabels(nombres, rotation=45, ha="right", fontsize=8)
+    ax_c2.set_ylim(min_ef, max_ef)
+    ax_c2.grid(True, linestyle="--", alpha=0.4)
+    for i, v in enumerate(eficiencias):
+        ax_c2.text(i, v + 0.5, f"{v}%", ha="center", fontweight="bold", fontsize=8)
+
+    # Subplot 3: Matriz de Utilidades
+    ax_c3.axis("off")
+    tabla_c = ax_c3.table(cellText=cell_text, colLabels=col_labels, loc="center", cellLoc="center")
+    tabla_c.auto_set_font_size(False)
+    tabla_c.set_fontsize(8.5)
+    tabla_c.scale(1.1, 1.4)
+
+    for (row, col), cell in tabla_c.get_celld().items():
+        if row == 0:
+            cell.set_facecolor(COLOR_PRIMARIO)
+            cell.set_text_props(color="white", fontweight="bold")
+        else:
+            if col == 0:
+                cell.set_facecolor("#F2F4F7")
+                cell.set_text_props(fontweight="bold")
+            else:
+                cell.set_facecolor("#FFFFFF")
+
+    ax_c3.set_title(f"Matriz de Utilidades Inmediatas (Día 1): {prod_nombre} - Decisión Óptima: {primer_res['mejor_accion']} (Utilidad Acumulada D={prof}: S/. {primer_res['utilidad_optima']:,.2f})",
+                     fontsize=10, fontweight="bold", color=COLOR_PRIMARIO, pad=10)
+
+    fig_cons.suptitle("Evaluación Consolidada del Algoritmo Poda Alfa-Beta en Decisiones de Inventario", fontsize=13, fontweight="bold", y=0.98)
+    plt.tight_layout()
+    fig_cons.savefig(os.path.join(subcarpeta_poda, "poda_alfa_beta_consolidado.png"), dpi=150, bbox_inches="tight")
+    plt.close(fig_cons)
+
 

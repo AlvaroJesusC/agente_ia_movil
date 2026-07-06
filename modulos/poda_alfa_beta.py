@@ -115,8 +115,15 @@ class EvaluadorPodaAlfaBeta:
         elif accion == AccionAgente.ORDEN_EMERGENCIA:
             cantidad_pedido = max(15.0, demanda_dia * 2.2)
         elif accion == AccionAgente.PROMO_DESCUENTO:
-            precio_efectivo = estado_actual.precio_venta * 0.80  # 20% descuento
-            demanda_dia *= 1.25  # Aumenta demanda por rotación
+            if estado_actual.es_perecedero and estado_actual.dias_vencimiento <= 7:
+                precio_efectivo = estado_actual.precio_venta * 0.75  # 25% descuento por vencimiento próximo
+                demanda_dia *= 1.35  # Aumento efectivo de rotación para mitigar mermas
+            elif estado_actual.stock_actual > (estado_actual.demanda_diaria_prom * 5):
+                precio_efectivo = estado_actual.precio_venta * 0.85
+                demanda_dia *= 1.20
+            else:
+                precio_efectivo = estado_actual.precio_venta * 0.80  # Descuento no rentable sin riesgo de vencimiento
+                demanda_dia *= 1.08
             cantidad_pedido = 0
         elif accion == AccionAgente.MANTENER:
             cantidad_pedido = 0
@@ -138,20 +145,23 @@ class EvaluadorPodaAlfaBeta:
             stock_remanente = 0.0
 
         ingresos = ventas_realizadas * precio_efectivo
-        costo_pedido = cantidad_pedido * estado_actual.costo_unidad
+        # Costo de Ventas (COGS) contable del periodo sobre unidades vendidas
+        costo_ventas = ventas_realizadas * estado_actual.costo_unidad
+
+        costo_pedido_fijo = 0.0
         if accion == AccionAgente.ORDEN_EMERGENCIA and cantidad_pedido > 0:
-            costo_pedido *= 1.15  # Recargo por entrega rápida
+            costo_pedido_fijo = cantidad_pedido * estado_actual.costo_unidad * 0.15  # Recargo logístico por envío rápido
 
         costo_almacenamiento = stock_remanente * estado_actual.costo_unidad * self.costo_almacenamiento_pct
         penalizacion_quiebre = quiebre_stock * (estado_actual.precio_venta * self.penalizacion_quiebre_mult)
         costo_merma = merma_unidades * estado_actual.costo_unidad
 
-        utilidad_paso = ingresos - costo_pedido - costo_almacenamiento - penalizacion_quiebre - costo_merma
+        utilidad_paso = ingresos - costo_ventas - costo_pedido_fijo - costo_almacenamiento - penalizacion_quiebre - costo_merma
 
         # Generar Estado Siguiente para el Día t+1
         nuevo_stock = stock_remanente
         if cantidad_pedido > 0 and not pedido_llega_hoy:
-            nuevo_stock += cantidad_pedido  # Arribo diferido de pedido colocados previa
+            nuevo_stock += cantidad_pedido  # Arribo diferido de pedidos
 
         estado_siguiente = estado_actual.copiar()
         estado_siguiente.stock_actual = nuevo_stock
@@ -159,6 +169,15 @@ class EvaluadorPodaAlfaBeta:
             estado_siguiente.dias_vencimiento = max(0, estado_siguiente.dias_vencimiento - 1)
 
         return round(utilidad_paso, 2), estado_siguiente
+
+    def obtener_acciones_ordenadas(self, estado):
+        """Ordenamiento heurístico de acciones para acelerar cutoffs en Alpha-Beta."""
+        if estado.stock_actual < (estado.demanda_diaria_prom * (estado.lead_time_base + 1)):
+            return [AccionAgente.ORDEN_NORMAL, AccionAgente.ORDEN_EMERGENCIA, AccionAgente.MANTENER, AccionAgente.PROMO_DESCUENTO]
+        elif estado.es_perecedero and estado.dias_vencimiento <= 7:
+            return [AccionAgente.PROMO_DESCUENTO, AccionAgente.MANTENER, AccionAgente.ORDEN_NORMAL, AccionAgente.ORDEN_EMERGENCIA]
+        else:
+            return [AccionAgente.MANTENER, AccionAgente.PROMO_DESCUENTO, AccionAgente.ORDEN_NORMAL, AccionAgente.ORDEN_EMERGENCIA]
 
     def alfa_beta_minimax(self, estado, profundidad, alfa, beta, es_maximizando, accion_actual=None):
         """
@@ -173,7 +192,7 @@ class EvaluadorPodaAlfaBeta:
         if es_maximizando:
             max_eval = -math.inf
             mejor_accion = None
-            acciones = AccionAgente.obtener_todas()
+            acciones = self.obtener_acciones_ordenadas(estado)
 
             for accion in acciones:
                 # Simular respuesta adversarial de MIN ante la acción de MAX

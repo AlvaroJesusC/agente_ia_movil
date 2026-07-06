@@ -313,16 +313,27 @@ def endpoint_ruta_reabastecimiento(
 
 
 @app.get("/poda-alfa-beta", summary="Gráfico PNG del Algoritmo Minimax con Poda Alfa-Beta")
-def endpoint_poda_alfa_beta(producto_id: str = Query(None, description="ID del producto a evaluar")):
-    """Devuelve la imagen PNG con la matriz de utilidades y eficiencia del algoritmo Poda Alfa-Beta."""
+def endpoint_poda_alfa_beta(
+    producto_id: str = Query(None, description="ID del producto para la matriz de utilidad (ej. prod_001)"),
+    tipo: str = Query("eficiencia", description="Tipo de gráfico a devolver: 'eficiencia', 'matriz', o 'consolidado'")
+):
+    """Devuelve la imagen PNG del algoritmo Poda Alfa-Beta (Eficiencia de todos los productos, Matriz de Utilidad o Vista Consolidada)."""
     df_inv = STATE["df_inventario"]
     preds = STATE["predicciones"]
 
-    # Simular evaluación de poda alfa-beta para los primeros productos o el especificado
+    if df_inv is None:
+        raise HTTPException(status_code=503, detail="Sistema inicializando datos...")
+
+    # Evaluar TODOS los productos para la comparativa de eficiencia
     evaluador = EvaluadorPodaAlfaBeta()
     resultados_poda = []
 
-    prods_eval = [producto_id] if (producto_id and producto_id in preds) else list(preds.keys())[:3]
+    prods_eval = list(preds.keys())
+
+    # Si se especificó un producto_id, colocarlo al inicio para que su matriz sea la seleccionada
+    if producto_id and producto_id in prods_eval:
+        prods_eval.remove(producto_id)
+        prods_eval.insert(0, producto_id)
 
     for p_id in prods_eval:
         fila = df_inv[df_inv["producto_id"] == p_id].iloc[0]
@@ -343,9 +354,17 @@ def endpoint_poda_alfa_beta(producto_id: str = Query(None, description="ID del p
         resultados_poda.append(res)
 
     reportador.graficar_resultados_poda_alfa_beta(resultados_poda, directorio="reportes")
-    file_path = os.path.join(ROOT_DIR, "reportes", "05_poda_alfa_beta", "poda_alfa_beta_eficiencia.png")
+
+    nombre_archivo = "poda_alfa_beta_eficiencia.png"
+    if tipo == "matriz":
+        nombre_archivo = "poda_alfa_beta_matriz_utilidad.png"
+    elif tipo == "consolidado":
+        nombre_archivo = "poda_alfa_beta_consolidado.png"
+
+    file_path = os.path.join(ROOT_DIR, "reportes", "05_poda_alfa_beta", nombre_archivo)
     if os.path.exists(file_path):
         with open(file_path, "rb") as f:
             return Response(content=f.read(), media_type="image/png")
     raise HTTPException(status_code=500, detail="Error al generar gráfico de Poda Alfa-Beta")
+
 
