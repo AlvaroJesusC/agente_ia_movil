@@ -368,3 +368,29 @@ def endpoint_poda_alfa_beta(
     raise HTTPException(status_code=500, detail="Error al generar gráfico de Poda Alfa-Beta")
 
 
+@app.get("/horas-pico", summary="Gráfico PNG de Patrón de Demanda por Horas Pico")
+def endpoint_horas_pico():
+    """Devuelve la imagen PNG con el patrón de demanda por hora (MLP)."""
+    df_inv = STATE["df_inventario"]
+    patrones = STATE["patrones_horarios"]
+    reportador.graficar_patrones_horas_pico(df_inv, patrones, directorio="reportes")
+    file_path = os.path.join(ROOT_DIR, "reportes", "03_prediccion_prophet_mlp", "patron_horas_pico.png")
+    if os.path.exists(file_path):
+        with open(file_path, "rb") as f:
+            return Response(content=f.read(), media_type="image/png")
+    raise HTTPException(status_code=500, detail="Error al generar gráfico de horas pico")
+
+
+@app.get("/eventos-especiales", summary="Gráfico PNG del Impacto de Eventos Especiales")
+def endpoint_eventos_especiales():
+    """Devuelve la imagen PNG con el análisis de impacto de feriados y eventos especiales en ventas."""
+    df_ventas = STATE["df_ventas"]
+    reportador.graficar_analisis_eventos(df_ventas, directorio="reportes")
+    file_path = os.path.join(ROOT_DIR, "reportes", "04_alertas_y_eventos", "analisis_eventos_especiales.png")
+    if os.path.exists(file_path):
+        with open(file_path, "rb") as f:
+            return Response(content=f.read(), media_type="image/png")
+    raise HTTPException(status_code=500, detail="Error al generar gráfico de eventos especiales")
+
+
+
