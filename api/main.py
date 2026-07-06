@@ -46,12 +46,12 @@ STATE = {
 def inicializar_sistema():
     """Carga los datos y entrena los modelos una sola vez al arrancar la API."""
     print("[API] Cargando dataset de ventas e inventario...")
-    df_ventas = sensor.cargar_ventas(os.path.join(ROOT_DIR, "datos", "ventas_datasL.csv"))
-    df_inventario = sensor.cargar_inventario(os.path.join(ROOT_DIR, "datos", "inventario_datasL.csv"))
+    df_ventas_full = sensor.cargar_ventas(os.path.join(ROOT_DIR, "datos", "ventas_datasL.csv"))
+    df_inventario_full = sensor.cargar_inventario(os.path.join(ROOT_DIR, "datos", "inventario_datasL.csv"))
 
     # Filtrar rango de entrenamiento
-    df_ventas = df_ventas[df_ventas["fecha"] <= pd.to_datetime("2026-05-31")].copy()
-    df_inventario = df_inventario[df_inventario["fecha"] <= pd.to_datetime("2026-05-31")].copy()
+    df_ventas = df_ventas_full[df_ventas_full["fecha"] <= pd.to_datetime("2026-05-31")].copy()
+    df_inventario = df_inventario_full[df_inventario_full["fecha"] <= pd.to_datetime("2026-05-31")].copy()
     ventas_diarias = sensor.obtener_ventas_diarias_completas(df_ventas)
 
     # Base de feriados
