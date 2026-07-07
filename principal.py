@@ -585,6 +585,7 @@ def ejecutar_agente():
     spinner.start()
     reportador.graficar_demanda_y_alertas(inventario_final_agosto, diccionario_predicciones_futuras, alertas_septiembre)
     reportador.graficar_patrones_horas_pico(inventario_final_agosto, diccionario_patrones_horarios)
+    reportador.graficar_curva_perdida_mlp(agente_cerebro)
     reportador.graficar_productos_mas_demandados(datos_ventas_completos)
     reportador.generar_dashboard_alertas(alertas_septiembre)
     reportador.graficar_analisis_eventos(datos_ventas_completos)

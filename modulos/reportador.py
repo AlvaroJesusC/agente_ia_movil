@@ -140,6 +140,34 @@ def graficar_patrones_horas_pico(df_inventario, dict_patrones, directorio="repor
     plt.savefig(os.path.join(directorio, "03_prediccion_prophet_mlp", "patron_horas_pico.png"), dpi=150, bbox_inches="tight")
     plt.close()
 
+def graficar_curva_perdida_mlp(agente_cerebro, directorio="reportes"):
+    # Grafica la curva de pérdida (Loss Curve) del modelo MLP para un producto representativo (Inca Kola 500ml - prod_001)
+    # para demostrar la convergencia y ausencia de sobreajuste.
+    asegurar_directorio_reportes(directorio)
+    
+    modelo = agente_cerebro.modelos_horarios.get("prod_001")
+    if modelo is None or not hasattr(modelo, "loss_curve_"):
+        for prod_id, mod in agente_cerebro.modelos_horarios.items():
+            if hasattr(mod, "loss_curve_"):
+                modelo = mod
+                break
+                
+    if modelo is None or not hasattr(modelo, "loss_curve_"):
+        return
+        
+    plt.figure(figsize=(9, 5))
+    plt.plot(modelo.loss_curve_, color=COLOR_PRIMARIO, linewidth=2.5, label="Error de Entrenamiento (Loss)")
+    plt.title("Curva de Pérdida (Loss Curve) de la Red Neuronal MLP\nProducto: Inca Kola 500ml (prod_001)", fontsize=12, fontweight="bold", color=COLOR_PRIMARIO)
+    plt.xlabel("Epochs (Ciclos de Entrenamiento)", fontsize=10)
+    plt.ylabel("Pérdida (Loss / MSE)", fontsize=10)
+    plt.grid(True, linestyle="--", alpha=0.5, color="#EEEEEE")
+    plt.legend(fontsize=10, loc="upper right")
+    plt.tight_layout()
+    
+    plot_path = os.path.join(directorio, "03_prediccion_prophet_mlp", "curva_perdida_mlp.png")
+    plt.savefig(plot_path, dpi=150, bbox_inches="tight")
+    plt.close()
+
 def graficar_productos_mas_demandados(df_ventas, directorio="reportes"):
     # Identifica el producto más vendido de cada categoría.
     asegurar_directorio_reportes(directorio)
