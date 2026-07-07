@@ -1038,4 +1038,104 @@ def graficar_resultados_poda_alfa_beta(resultados_poda, directorio="reportes"):
     fig_cons.savefig(os.path.join(subcarpeta_poda, "poda_alfa_beta_consolidado.png"), dpi=150, bbox_inches="tight")
     plt.close(fig_cons)
 
+#FINAL 
+def graficar_mapa_calor_quiebres_final(df_inventario_completo, directorio="reportes"):
+    """
+    Genera un mapa de calor que muestra los quiebres de stock finales (reales/simulados)
+    que ocurrieron durante la simulación de Junio a Agosto 2026.
+    
+    El eje Y muestra los productos y el eje X muestra las 13 semanas de la simulación.
+    Las celdas muestran la cantidad de días con quiebre (stock_fisico == 0 o ventas_perdidas_estimadas > 0)
+    en esa semana.
+    """
+    asegurar_directorio_reportes(directorio)
+    
+    # Filtrar solo el periodo de simulación (Junio a Agosto 2026)
+    df_sim = df_inventario_completo[
+        (df_inventario_completo["fecha"] >= pd.to_datetime("2026-06-01")) & 
+        (df_inventario_completo["fecha"] <= pd.to_datetime("2026-08-31"))
+    ].copy()
+    
+    if df_sim.empty:
+        return
+        
+    # Calcular a qué semana pertenece cada fecha (0 a 12)
+    start_date = pd.to_datetime("2026-06-01")
+    df_sim["dias_desde_inicio"] = (df_sim["fecha"] - start_date).dt.days
+    df_sim["semana_num"] = df_sim["dias_desde_inicio"] // 7
+    # Limitar el número de semanas a 13
+    df_sim.loc[df_sim["semana_num"] > 12, "semana_num"] = 12
+    
+    # Crear etiquetas de fecha para las semanas
+    etiquetas_semanas = []
+    for w in range(13):
+        w_start = start_date + pd.Timedelta(days=w * 7)
+        if w == 12:
+            w_end = pd.to_datetime("2026-08-31")
+        else:
+            w_end = w_start + pd.Timedelta(days=6)
+        etiquetas_semanas.append(f"Sem {w+1:02d}\n({w_start.strftime('%d/%m')}-{w_end.strftime('%d/%m')})")
+        
+    # Determinar si el día tuvo quiebre: stock_fisico == 0 o ventas_perdidas_estimadas > 0
+    df_sim["stock_fisico"] = pd.to_numeric(df_sim["stock_fisico"], errors="coerce").fillna(0.0)
+    df_sim["ventas_perdidas_estimadas"] = pd.to_numeric(df_sim["ventas_perdidas_estimadas"], errors="coerce").fillna(0.0)
+    
+    df_sim["es_quiebre"] = (df_sim["stock_fisico"] == 0.0) | (df_sim["ventas_perdidas_estimadas"] > 0.0)
+    
+    # Agrupar por producto y semana para contar los días con quiebre
+    quiebres_agrupados = df_sim.groupby(["producto_id", "producto_nombre", "semana_num"])["es_quiebre"].sum().reset_index()
+    
+    # Pivotar los datos
+    matriz_pivot = quiebres_agrupados.pivot(
+        index="producto_nombre", 
+        columns="semana_num", 
+        values="es_quiebre"
+    ).fillna(0.0)
+    
+    # Asegurar el orden de los productos por ID
+    orden_prod = df_sim.groupby("producto_nombre")["producto_id"].first().sort_values().index
+    matriz_pivot = matriz_pivot.reindex(orden_prod).fillna(0.0)
+    
+    # Crear la figura
+    fig, ax = plt.subplots(figsize=(14, 9))
+    fig.patch.set_facecolor("#FFFFFF")
+    
+    # Dibujar el heatmap (escala amarillo a rojo)
+    im = ax.imshow(matriz_pivot.values, cmap="YlOrRd", vmin=0, vmax=7, aspect="auto")
+    
+    # Configurar ejes
+    ax.set_yticks(np.arange(len(matriz_pivot.index)))
+    ax.set_yticklabels(matriz_pivot.index, fontsize=10, fontweight="bold")
+    ax.set_xticks(np.arange(13))
+    ax.set_xticklabels(etiquetas_semanas, fontsize=9)
+    
+    # Agregar valores de texto en cada celda
+    for i in range(len(matriz_pivot.index)):
+        for j in range(13):
+            val = int(matriz_pivot.values[i, j])
+            color_texto = "white" if val >= 4 else "black"
+            ax.text(j, i, f"{val}d", ha="center", va="center", 
+                    color=color_texto, fontweight="bold" if val > 0 else "normal", fontsize=9.5)
+            
+    ax.set_title("Mapa de Calor: Días con Quiebre de Stock por Semana (Simulación Junio - Agosto 2026)", 
+                 fontsize=14, fontweight="bold", color=COLOR_PRIMARIO, pad=20)
+    
+    # Agregar barra de color
+    cbar = fig.colorbar(im, ax=ax, orientation="horizontal", pad=0.12, shrink=0.6)
+    cbar.set_label("Número de días con quiebre en la semana (0 a 7 días)", fontsize=11, fontweight="bold")
+    cbar.set_ticks(np.arange(8))
+    
+    # Subtítulo explicativo
+    fig.text(0.5, 0.02, 
+             "Nota: Se considera quiebre si el stock físico al final del día es 0 o si se registraron ventas perdidas estimadas en el día.", 
+             ha="center", fontsize=9.5, color="#555555", style="italic")
+             
+    plt.tight_layout()
+    
+    # Guardar en la carpeta 04_alertas_y_eventos
+    ruta_salida = os.path.join(directorio, "04_alertas_y_eventos", "mapa_calor_quiebres_final.png")
+    fig.savefig(ruta_salida, dpi=150, bbox_inches="tight")
+    plt.close(fig)
+
+
 

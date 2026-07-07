@@ -1,6 +1,6 @@
 ========================================================================
          INFORME DE PREDICCIÓN Y OPTIMIZACIÓN DE INVENTARIO - PYMEVISION AI
-Fecha de Emisión: 06/07/2026 18:59:35
+Fecha de Emisión: 06/07/2026 23:35:48
 ========================================================================
 
 1. RESULTADOS DE LA SIMULACIÓN AUTÓNOMA (JUNIO - AGOSTO 2026)
@@ -312,9 +312,9 @@ decisiones en el ciclo Sense-Plan-Act del Actuador, se incorporaron 3 algoritmos
   * Estrategia: Ruta de Picking con Heurística de Vecino Más Cercano (Nearest Neighbor) + A*
   * Función de Evaluación: f(n) = g(n) + h(n) en cada etapa de recorrido
   * Heurística h(n): Distancia Manhattan d(n, próximo_estante) = |x - x_obj| + |y - y_obj|
-  * Costo Real Acumulado Total g(n)       : 52.00
+  * Costo Real Acumulado Total g(n)       : 48.00
   * Heurística Inicial h(0,0)             : 3.00
-  * Evaluación Total de Ruta f(n)         : 52.00
+  * Evaluación Total de Ruta f(n)         : 48.00
 
 9.3 Priorización Estratégica de Pedidos (A* Ranking f(n)):
 Producto                  | Alerta             | Prob. Riesgo | Costo g(n) | Heur. h(n) | Prioridad f(n)

@@ -597,6 +597,8 @@ def ejecutar_agente():
     reportador.graficar_arbol_categorias_bfs_dfs(busqueda_res)
     reportador.graficar_ruta_reabastecimiento_astar(astar_res)
     reportador.graficar_resultados_poda_alfa_beta(resultados_poda_alfa_beta)
+    reportador.graficar_mapa_calor_quiebres_final(datos_inventario_completos)
+    
     
     generar_reporte_escrito_final(
         inventario_final_agosto, alertas_septiembre, diccionario_predicciones_futuras, datos_ventas_completos,

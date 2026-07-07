@@ -393,4 +393,21 @@ def endpoint_eventos_especiales():
     raise HTTPException(status_code=500, detail="Error al generar gráfico de eventos especiales")
 
 
+@app.get("/mapa-calor-final", summary="Gráfico PNG del Mapa de Calor de Quiebres de Stock Final (Simulación)")
+def endpoint_mapa_calor_final():
+    """Devuelve el gráfico PNG del mapa de calor con los quiebres de stock ocurridos en la simulación."""
+    df_inv = STATE["df_inventario"]
+    if df_inv is None:
+        raise HTTPException(status_code=503, detail="Sistema inicializando datos...")
+    
+    # Generar o actualizar el gráfico
+    reportador.graficar_mapa_calor_quiebres_final(df_inv, directorio="reportes")
+    file_path = os.path.join(ROOT_DIR, "reportes", "04_alertas_y_eventos", "mapa_calor_quiebres_final.png")
+    if os.path.exists(file_path):
+        with open(file_path, "rb") as f:
+            return Response(content=f.read(), media_type="image/png")
+    raise HTTPException(status_code=500, detail="Error al generar mapa de calor final")
+
+
+
 
