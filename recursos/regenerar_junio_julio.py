@@ -1,5 +1,5 @@
 # Script para regenerar datos de ventas de Junio y Julio 2026 con multiplicadores
-
+#NOOOOOOOOOOO EJECUTAR NOOOOO
 
 import csv
 import random
