@@ -168,6 +168,193 @@ def graficar_curva_perdida_mlp(agente_cerebro, directorio="reportes"):
     plt.savefig(plot_path, dpi=150, bbox_inches="tight")
     plt.close()
 
+def graficar_arquitectura_mlp_proyecto(directorio="reportes"):
+    # Genera el diagrama de la arquitectura del perceptrón multicapa usado en el proyecto.
+    asegurar_directorio_reportes(directorio)
+    
+    plt.figure(figsize=(10, 6))
+    ax = plt.gca()
+    ax.axis('off')
+    
+    node_positions = {}
+    
+    # Capa 0: Entrada (4 nodos)
+    y_entradas = [1.5, 0.5, -0.5, -1.5]
+    nombres_entradas = ["Hora", "Día Semana", "Feriado", "Fin Semana"]
+    for idx, (y, nombre) in enumerate(zip(y_entradas, nombres_entradas)):
+        node_positions[f"E_{idx}"] = (1, y, nombre)
+        
+    # Capa 1: Oculta 1 (representamos 5 nodos, el central es "...")
+    y_h1 = [2.0, 1.0, 0.0, -1.0, -2.0]
+    nombres_h1 = ["h1,1", "h1,2", "...", "h1,49", "h1,50"]
+    for idx, (y, nombre) in enumerate(zip(y_h1, nombres_h1)):
+        node_positions[f"H1_{idx}"] = (3.5, y, nombre)
+        
+    # Capa 2: Oculta 2 (representamos 5 nodos, el central es "...")
+    y_h2 = [2.0, 1.0, 0.0, -1.0, -2.0]
+    nombres_h2 = ["h2,1", "h2,2", "...", "h2,24", "h2,25"]
+    for idx, (y, nombre) in enumerate(zip(y_h2, nombres_h2)):
+        node_positions[f"H2_{idx}"] = (6.0, y, nombre)
+        
+    # Capa 3: Salida (1 nodo)
+    node_positions["S_0"] = (8.5, 0, "Demanda")
+    
+    # Dibujar conexiones
+    for k1, (x1, y1, name1) in node_positions.items():
+        for k2, (x2, y2, name2) in node_positions.items():
+            c1_tipo = k1.split("_")[0]
+            c2_tipo = k2.split("_")[0]
+            
+            # Definir transiciones de capas válidas
+            valido = False
+            if c1_tipo == "E" and c2_tipo == "H1":
+                valido = True
+            elif c1_tipo == "H1" and c2_tipo == "H2":
+                valido = True
+            elif c1_tipo == "H2" and c2_tipo == "S":
+                valido = True
+                
+            if valido:
+                if name1 == "..." or name2 == "...":
+                    plt.plot([x1, x2], [y1, y2], color="#BDC3C7", linestyle=":", alpha=0.4, linewidth=0.8)
+                else:
+                    plt.plot([x1, x2], [y1, y2], color="#3498DB", alpha=0.25, linewidth=1.0)
+                    
+    # Dibujar los nodos (círculos)
+    for key, (x, y, name) in node_positions.items():
+        if name == "...":
+            plt.text(x, y, "⋮", fontsize=20, ha='center', va='center', color='#7F8C8D', fontweight='bold')
+        else:
+            color = COLOR_SECUNDARIO
+            if key.startswith("E"):
+                color = COLOR_PRIMARIO
+            elif key.startswith("S"):
+                color = COLOR_EXITO
+                
+            circle = plt.Circle((x, y), 0.28, color=color, zorder=3, alpha=0.9)
+            ax.add_patch(circle)
+            
+            if key.startswith("E"):
+                plt.text(x - 0.4, y, name, fontsize=10, ha='right', va='center', fontweight='bold', color='#2C3E50')
+            elif key.startswith("S"):
+                plt.text(x + 0.4, y, name, fontsize=10, ha='left', va='center', fontweight='bold', color='#2C3E50')
+            else:
+                plt.text(x, y, name, fontsize=8, ha='center', va='center', color='white', fontweight='bold')
+                
+    # Añadir títulos de capas en la parte superior
+    plt.text(1, 2.7, "Capa de Entrada\n(4 variables)", fontsize=11, ha='center', va='center', fontweight='bold', color='#2C3E50')
+    plt.text(3.5, 2.7, "Capa Oculta 1\n(50 Neuronas)", fontsize=11, ha='center', va='center', fontweight='bold', color='#2C3E50')
+    plt.text(6.0, 2.7, "Capa Oculta 2\n(25 Neuronas)", fontsize=11, ha='center', va='center', fontweight='bold', color='#2C3E50')
+    plt.text(8.5, 2.7, "Capa de Salida\n(1 Neurona)", fontsize=11, ha='center', va='center', fontweight='bold', color='#2C3E50')
+    
+    plt.xlim(-0.5, 10)
+    plt.ylim(-2.8, 3.2)
+    plt.title("Arquitectura del Perceptrón Multicapa (MLP) del Proyecto\n(Predicción Horaria de Demanda)", fontsize=14, fontweight="bold", color=COLOR_PRIMARIO, pad=15)
+    plt.tight_layout()
+    
+    plot_path = os.path.join(directorio, "03_prediccion_prophet_mlp", "arquitectura_mlp_proyecto.png")
+    plt.savefig(plot_path, dpi=150, bbox_inches="tight")
+    plt.close()
+
+def graficar_comportamiento_perceptrones(directorio="reportes"):
+    # Compara el comportamiento de un Perceptrón Simple frente a un Perceptrón Multicapa en un escenario de regresión.
+    asegurar_directorio_reportes(directorio)
+    
+    from sklearn.neural_network import MLPRegressor
+    from sklearn.preprocessing import StandardScaler
+    
+    # Generar datos de demanda horaria con patrones no lineales realistas
+    np.random.seed(42)
+    X_hours = np.random.uniform(0, 23.9, 250)
+    
+    # Modelo de demanda con dos picos: almuerzo (13:00) y cena (20:00)
+    pico_almuerzo = 15 * np.exp(-((X_hours - 13.0) ** 2) / (2 * (1.2 ** 2)))
+    pico_cena = 22 * np.exp(-((X_hours - 20.0) ** 2) / (2 * (1.5 ** 2)))
+    base_demanda = 5.0
+    ruido = np.random.normal(0, 1.5, len(X_hours))
+    
+    y_demand = np.maximum(0, base_demanda + pico_almuerzo + pico_cena + ruido)
+    
+    # Crear grid de predicción de 0 a 24 horas
+    X_grid = np.linspace(0, 24, 300).reshape(-1, 1)
+    
+    # 1. Ajuste Perceptrón Simple / Regresión Lineal
+    # y = w * x + b
+    coefs = np.polyfit(X_hours, y_demand, 1)
+    y_pred_linear = coefs[0] * X_grid.flatten() + coefs[1]
+    
+    # 2. Ajuste Perceptrón Multicapa (MLPRegressor) con normalización
+    scaler = StandardScaler()
+    X_hours_scaled = scaler.fit_transform(X_hours.reshape(-1, 1))
+    X_grid_scaled = scaler.transform(X_grid)
+    
+    mlp = MLPRegressor(
+        hidden_layer_sizes=(50, 25),
+        activation="relu",
+        solver="lbfgs",
+        max_iter=5000,
+        alpha=1e-4,
+        random_state=42
+    )
+    mlp.fit(X_hours_scaled, y_demand)
+    y_pred_mlp = mlp.predict(X_grid_scaled)
+    
+    fig, axes = plt.subplots(1, 2, figsize=(14, 6))
+    
+    # Subplot 1: Perceptrón Simple (Regresión Lineal)
+    ax1 = axes[0]
+    ax1.scatter(X_hours, y_demand, color="#85929E", alpha=0.6, label="Demanda Simulada (Ejemplo Ilustrativo)", edgecolors='none', s=25)
+    ax1.plot(X_grid, y_pred_linear, color=COLOR_ALERTA_ALTA, linewidth=3.0, linestyle="--", label="Predicción Lineal (Perceptrón Simple)")
+    ax1.set_xlim(0, 24)
+    ax1.set_ylim(0, np.max(y_demand) + 3)
+    ax1.set_title("Perceptrón Simple (Regresión Lineal)\nFalla en capturar picos y valles", fontsize=12, fontweight="bold", color=COLOR_PRIMARIO)
+    ax1.set_xlabel("Hora del Día", fontsize=10)
+    ax1.set_ylabel("Demanda (unidades)", fontsize=10)
+    ax1.set_xticks(range(0, 25, 2))
+    ax1.legend(loc="upper left", fontsize=9.5)
+    ax1.grid(True, linestyle="--", alpha=0.3)
+    
+    ax1.text(12, 1, "Incapaz de modelar la no linealidad.\nSubestima picos de almuerzo y cena,\ny sobreestima en horas de la madrugada.", 
+             fontsize=9.5, ha='center', va='bottom', bbox=dict(facecolor='white', alpha=0.85, edgecolor='#CCCCCC', boxstyle='round,pad=0.5'))
+    
+    # Subplot 2: Perceptrón Multicapa (MLP)
+    ax2 = axes[1]
+    ax2.scatter(X_hours, y_demand, color="#85929E", alpha=0.6, label="Demanda Simulada (Ejemplo Ilustrativo)", edgecolors='none', s=25)
+    ax2.plot(X_grid, y_pred_mlp, color=COLOR_EXITO, linewidth=3.0, label="Predicción MLP (Perceptrón Multicapa)")
+    ax2.set_xlim(0, 24)
+    ax2.set_ylim(0, np.max(y_demand) + 3)
+    ax2.set_title("Perceptrón Multicapa (MLPRegressor)\nSe adapta con precisión a los picos de demanda", fontsize=12, fontweight="bold", color=COLOR_PRIMARIO)
+    ax2.set_xlabel("Hora del Día", fontsize=10)
+    ax2.set_ylabel("Demanda (unidades)", fontsize=10)
+    ax2.set_xticks(range(0, 25, 2))
+    ax2.legend(loc="upper left", fontsize=9.5)
+    ax2.grid(True, linestyle="--", alpha=0.3)
+    
+    ax2.text(12, 1, "Ajusta curvas complejas gracias a las\ncapas ocultas y la función de activación ReLU.\nCaptura con precisión ambos picos de ventas.", 
+             fontsize=9.5, ha='center', va='bottom', bbox=dict(facecolor='white', alpha=0.85, edgecolor='#CCCCCC', boxstyle='round,pad=0.5'))
+    
+    plt.suptitle("Comportamiento en Regresión: Perceptrón Simple vs Perceptrón Multicapa (MLP)", fontsize=14, fontweight="bold", color=COLOR_PRIMARIO, y=0.98)
+    
+    # Nota al pie de página indicando datos sintéticos
+    fig.text(
+        0.5, 
+        0.02, 
+        "Nota: Datos sintéticos generados con fines pedagógicos para ilustrar la diferencia de capacidad entre ambos modelos. No corresponden al dataset real del proyecto (ver sección 2.8 para resultados con datos reales de ventas).", 
+        ha='center', 
+        va='bottom', 
+        fontsize=8.5, 
+        color='#7F8C8D',
+        style='italic',
+        wrap=True
+    )
+    
+    plt.tight_layout()
+    fig.subplots_adjust(bottom=0.14, top=0.88)
+    
+    plot_path = os.path.join(directorio, "03_prediccion_prophet_mlp", "comportamiento_perceptronesV2.png")
+    plt.savefig(plot_path, dpi=150, bbox_inches="tight")
+    plt.close()
+
 def graficar_productos_mas_demandados(df_ventas, directorio="reportes"):
     # Identifica el producto más vendido de cada categoría.
     asegurar_directorio_reportes(directorio)
@@ -1138,4 +1325,187 @@ def graficar_mapa_calor_quiebres_final(df_inventario_completo, directorio="repor
     plt.close(fig)
 
 
+def graficar_arbol_poda_alfa_beta(registro_arbol, mejor_accion, prod_nombre, directorio="reportes"):
+    """
+    Genera un diagrama gráfico del árbol de decisión Minimax con Poda Alfa-Beta para un producto,
+    utilizando el registro de trazas real obtenido durante la búsqueda.
+    Dibuja nodos MAX (cuadrados) y MIN (círculos), marcando las ramas evaluadas (líneas continuas)
+    y las ramas podadas (líneas discontinuas con dos líneas rojas diagonales perpendiculares '//').
+    """
+    import math
+    
+    # Asegurar directorios
+    asegurar_directorio_reportes(directorio)
+    subcarpeta_poda = os.path.join(directorio, "05_poda_alfa_beta")
+    if not os.path.exists(subcarpeta_poda):
+        os.makedirs(subcarpeta_poda, exist_ok=True)
+
+    # Configurar figura con mayor tamaño vertical
+    fig, ax = plt.subplots(figsize=(15, 9.5))
+    fig.patch.set_facecolor("#FFFFFF")
+    ax.axis("off")
+
+    # Extraer acciones y escenarios dinámicamente de las claves del registro
+    acciones_registradas = []
+    for k in registro_arbol.keys():
+        if len(k) == 2 and k[0] == "RAIZ" and k[1] not in acciones_registradas:
+            acciones_registradas.append(k[1])
+    
+    # Si no hay registros de nivel 1, usar acciones estándar
+    if not acciones_registradas:
+        acciones_registradas = ["MANTENER", "PROMO_DESCUENTO", "ORDEN_NORMAL", "ORDEN_EMERGENCIA"]
+
+    escenarios_registrados = []
+    for k in registro_arbol.keys():
+        if len(k) == 3 and k[0] == "RAIZ" and k[2] not in escenarios_registrados:
+            escenarios_registrados.append(k[2])
+            
+    if not escenarios_registrados:
+        escenarios_registrados = ["ESTABLE", "ALTA_DEMANDA", "RETRASO_PROVEEDOR", "CRISIS_INVENTARIO"]
+
+    # Mapeo de coordenadas
+    # Nivel 0: Raíz (MAX) -> y = 2.0
+    # Nivel 1: Acciones (MIN) -> y = 1.0
+    # Nivel 2: Escenarios (Leaves / MAX) -> y = 0.0
+    
+    coords = {}
+    coords[("RAIZ",)] = (0.0, 2.0)
+
+    # Asignar coordenadas a hojas (nivel 2) y acciones (nivel 1)
+    for idx_acc, acc in enumerate(acciones_registradas):
+        x_action = -6.0 + 4.0 * idx_acc
+        coords[("RAIZ", acc)] = (x_action, 1.0)
+        
+        for idx_esc, esc in enumerate(escenarios_registrados):
+            x_leaf = x_action - 1.5 + idx_esc * 1.0
+            coords[("RAIZ", acc, esc)] = (x_leaf, 0.0)
+
+    # Colores del tema
+    COLOR_MAX_NODE = "#1A5276"  # Color primario
+    COLOR_MIN_NODE = "#2E86C1"  # Color secundario
+    COLOR_PRUNED = "#BDC3C7"    # Gris
+    COLOR_BG_NODE_VISITED = "#E8F8F5" # Verde claro
+    COLOR_BG_NODE_PRUNED = "#F8F9F9"  # Gris claro
+
+    # Dibujar aristas/ramas
+    for node_path, coord in coords.items():
+        if len(node_path) == 1:
+            continue
+        
+        parent_path = node_path[:-1]
+        x1, y1 = coords[parent_path]
+        x2, y2 = coord
+        
+        # Buscar estado de este nodo en el registro
+        node_info = registro_arbol.get(node_path, {"visitado": False, "podado": True})
+        visitado = node_info.get("visitado", False)
+        
+        if visitado:
+            # Rama evaluada: línea continua
+            ax.plot([x1, x2], [y1, y2], color="#34495E", linewidth=2.0, zorder=1)
+        else:
+            # Rama podada: línea discontinua gris
+            ax.plot([x1, x2], [y1, y2], color=COLOR_PRUNED, linestyle="--", linewidth=1.5, zorder=1)
+            
+            # Dibujar la doble barra roja perpendicular '//'
+            dx = x2 - x1
+            dy = y2 - y1
+            dist = math.sqrt(dx**2 + dy**2)
+            if dist > 0:
+                nx = -dy / dist
+                ny = dx / dist
+                mx = x1 + 0.55 * dx
+                my = y1 + 0.55 * dy
+                
+                for offset in [-0.07, 0.07]:
+                    cx = mx + offset * (dx / dist)
+                    cy = my + offset * (dy / dist)
+                    ax.plot([cx - 0.16*nx, cx + 0.16*nx], [cy - 0.16*ny, cy + 0.16*ny], color="#E74C3C", linewidth=2.5, zorder=2)
+
+    # Dibujar nodos
+    for node_path, coord in coords.items():
+        x, y = coord
+        node_info = registro_arbol.get(node_path, {"visitado": False, "podado": True})
+        visitado = node_info.get("visitado", False)
+        valor = node_info.get("valor", None)
+        alfa_in = node_info.get("alfa_in", -math.inf)
+        beta_in = node_info.get("beta_in", math.inf)
+        
+        # Determinar etiquetas y textos
+        if len(node_path) == 1:
+            lbl_nodo = "RAÍZ (MAX)"
+            lbl_valor = f"V = {valor:,.1f}" if valor is not None else "V = ?"
+            shape = "square"
+            color_border = COLOR_MAX_NODE if visitado else COLOR_PRUNED
+            color_bg = "#EBF5FB" if visitado else COLOR_BG_NODE_PRUNED
+        elif len(node_path) == 2:
+            lbl_nodo = f"{node_path[1]}"
+            lbl_valor = f"V = {valor:,.1f}" if valor is not None else "V = ?"
+            shape = "circle"
+            color_border = COLOR_MIN_NODE if visitado else COLOR_PRUNED
+            color_bg = "#EBF5FB" if visitado else COLOR_BG_NODE_PRUNED
+        else:
+            lbl_nodo = f"{node_path[2]}"
+            lbl_valor = f"U = {valor:,.1f}" if valor is not None else "U = ?"
+            shape = "square"
+            color_border = COLOR_MAX_NODE if visitado else COLOR_PRUNED
+            color_bg = COLOR_BG_NODE_VISITED if visitado else COLOR_BG_NODE_PRUNED
+
+        # Dibujar forma del nodo
+        if shape == "square":
+            bbox_props = dict(boxstyle="round,pad=0.4", facecolor=color_bg, edgecolor=color_border, linewidth=2.0 if visitado else 1.0, zorder=3)
+            ax.text(x, y, lbl_valor, ha="center", va="center", fontsize=9, fontweight="bold" if visitado else "normal", color=color_border, bbox=bbox_props)
+        else:
+            bbox_props = dict(boxstyle="circle,pad=0.5", facecolor=color_bg, edgecolor=color_border, linewidth=2.0 if visitado else 1.0, zorder=3)
+            ax.text(x, y, lbl_valor, ha="center", va="center", fontsize=9, fontweight="bold" if visitado else "normal", color=color_border, bbox=bbox_props)
+
+        # Dibujar etiquetas de nombre y valores de Alpha/Beta
+        if len(node_path) == 3:
+            # Hojas muestran el escenario abajo, apilando palabras verticalmente con salto de línea para evitar solapamientos
+            ax.text(x, y - 0.25, lbl_nodo.replace("_", "\n"), ha="center", va="top", fontsize=7.5, color="#5D6D7E", fontweight="semibold" if visitado else "normal")
+        elif len(node_path) == 2:
+            # Nodos intermedios muestran la acción arriba
+            ax.text(x, y + 0.32, lbl_nodo.replace("_", " "), ha="center", va="bottom", fontsize=8.5, color="#2C3E50", fontweight="bold" if visitado else "normal")
+        else:
+            # Raíz
+            ax.text(x, y + 0.35, lbl_nodo, ha="center", va="bottom", fontsize=11, color="#2C3E50", fontweight="bold")
+
+        # Anotación de Alfa y Beta para nodos visitados
+        if visitado and len(node_path) < 3:
+            a_str = "-∞" if alfa_in == -math.inf else f"{alfa_in:,.1f}"
+            b_str = "∞" if beta_in == math.inf else f"{beta_in:,.1f}"
+            lbl_ab = f"α={a_str}\nβ={b_str}"
+            ax.text(x + 0.62, y, lbl_ab, ha="left", va="center", fontsize=8, color="#7F8C8D", style="italic", fontweight="semibold")
+
+
+    # Ajustar límites de los ejes para prevenir recortes horizontales y solapamientos verticales
+    ax.set_ylim(-0.5, 2.75)
+    ax.set_xlim(-8.8, 8.8)
+
+    # Título con suficiente espacio superior
+    ax.set_title(f"Árbol de Decisión Minimax con Poda Alfa-Beta (Ejecución Real de Búsqueda)\nProducto: {prod_nombre}",
+                 fontsize=14, fontweight="bold", color=COLOR_PRIMARIO, pad=35)
+    
+    # Cuadro explicativo de leyenda
+    leyenda_txt = (
+        "Leyenda / Explicación del Algoritmo:\n"
+        "• Cuadrados (Capa 0 y 2): Capas MAX (Decisión del Agente y Utilidad Final)\n"
+        "• Círculos (Capa 1): Capa MIN (Incertidumbre adversarial del Entorno / Mercado)\n"
+        "• Líneas continuas: Ramas evaluadas por el algoritmo Minimax\n"
+        "• Líneas discontinuas con marca roja (//): Ramas podadas (Cutoffs Alfa/Beta)\n"
+        "• α (Alpha): El mejor valor (mayor utilidad) que MAX tiene garantizado hasta el momento\n"
+        "• β (Beta): El peor valor (menor utilidad) que MIN puede imponer a MAX\n"
+        "• Cuando β <= α se produce una poda, pues MAX nunca elegirá esa rama al tener mejores alternativas."
+    )
+    
+    # Colocar la leyenda en la parte inferior reservada
+    fig.text(0.5, 0.03, leyenda_txt, ha="center", va="bottom", fontsize=9.5, color="#1C2833",
+              bbox=dict(boxstyle="round,pad=0.8", facecolor="#FEF9E7", edgecolor="#F4D03F", alpha=0.9))
+
+    # Ajustar el espacio de los subplots dejando libre el 25% inferior para la leyenda
+    plt.tight_layout(rect=[0, 0.25, 1, 0.98])
+    
+    ruta_salida = os.path.join(subcarpeta_poda, "poda_alfa_beta_arbol.png")
+    fig.savefig(ruta_salida, dpi=150, bbox_inches="tight")
+    plt.close(fig)
 

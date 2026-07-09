@@ -85,6 +85,7 @@ class EvaluadorPodaAlfaBeta:
         self.factor_descuento = factor_descuento
         self.nodos_visitados = 0
         self.nodos_podados = 0
+        self.registro_arbol = {}
 
     def simular_paso_paso(self, estado_actual, accion, escenario):
         """
@@ -179,14 +180,27 @@ class EvaluadorPodaAlfaBeta:
         else:
             return [AccionAgente.MANTENER, AccionAgente.PROMO_DESCUENTO, AccionAgente.ORDEN_NORMAL, AccionAgente.ORDEN_EMERGENCIA]
 
-    def alfa_beta_minimax(self, estado, profundidad, alfa, beta, es_maximizando, accion_actual=None):
+    def alfa_beta_minimax(self, estado, profundidad, alfa, beta, es_maximizando, accion_actual=None, ruta_nodo=None):
         """
         Ejecuta la Poda Alfa-Beta con evaluación recursiva multietapa (profundidad real >= 2).
         """
+        if ruta_nodo is None:
+            ruta_nodo = ("RAIZ",)
+
         self.nodos_visitados += 1
 
+        # Registrar nodo actual
+        self.registro_arbol[ruta_nodo] = {
+            "tipo": "MAX" if es_maximizando else "MIN",
+            "alfa_in": alfa,
+            "beta_in": beta,
+            "valor": None,
+            "visitado": True,
+            "podado": False
+        }
+
         if profundidad == 0:
-            # Caso base: retorno de estimación heurística neutra
+            self.registro_arbol[ruta_nodo]["valor"] = 0.0
             return 0.0, None
 
         if es_maximizando:
@@ -194,9 +208,26 @@ class EvaluadorPodaAlfaBeta:
             mejor_accion = None
             acciones = self.obtener_acciones_ordenadas(estado)
 
+            poda_ocurrida = False
             for accion in acciones:
+                ruta_hijo = ruta_nodo + (accion,)
+                if poda_ocurrida:
+                    # Registrar como podado (no visitado)
+                    self.registro_arbol[ruta_hijo] = {
+                        "tipo": "MIN",
+                        "alfa_in": alfa,
+                        "beta_in": beta,
+                        "valor": None,
+                        "visitado": False,
+                        "podado": True
+                    }
+                    continue
+
                 # Simular respuesta adversarial de MIN ante la acción de MAX
-                eval_nodo, _ = self.alfa_beta_minimax(estado, profundidad, alfa, beta, es_maximizando=False, accion_actual=accion)
+                eval_nodo, _ = self.alfa_beta_minimax(
+                    estado, profundidad, alfa, beta, es_maximizando=False, 
+                    accion_actual=accion, ruta_nodo=ruta_hijo
+                )
 
                 if eval_nodo > max_eval:
                     max_eval = eval_nodo
@@ -205,23 +236,53 @@ class EvaluadorPodaAlfaBeta:
                 alfa = max(alfa, eval_nodo)
                 if beta <= alfa:
                     self.nodos_podados += 1
-                    break  # Poda Alfa (Alpha Cutoff)
+                    poda_ocurrida = True  # Poda Alfa (Alpha Cutoff)
 
+            self.registro_arbol[ruta_nodo]["valor"] = max_eval
+            self.registro_arbol[ruta_nodo]["alfa_out"] = alfa
+            self.registro_arbol[ruta_nodo]["beta_out"] = beta
             return max_eval, mejor_accion
         else:
             min_eval = math.inf
             escenarios = EscenarioEntorno.obtener_todos()
 
+            poda_ocurrida = False
             for escenario in escenarios:
+                ruta_hijo = ruta_nodo + (escenario,)
+                if poda_ocurrida:
+                    self.registro_arbol[ruta_hijo] = {
+                        "tipo": "MAX",
+                        "alfa_in": alfa,
+                        "beta_in": beta,
+                        "valor": None,
+                        "visitado": False,
+                        "podado": True
+                    }
+                    continue
+
                 # 1. Utilidad del día actual + Transición al día siguiente
                 utilidad_paso, estado_sig = self.simular_paso_paso(estado, accion_actual, escenario)
 
                 # 2. Si hay más días por evaluar (profundidad > 1), continuar recursión en MAX para el día t+1
                 if profundidad > 1:
-                    val_futuro, _ = self.alfa_beta_minimax(estado_sig, profundidad - 1, alfa, beta, es_maximizando=True)
+                    val_futuro, _ = self.alfa_beta_minimax(
+                        estado_sig, profundidad - 1, alfa, beta, es_maximizando=True, 
+                        ruta_nodo=ruta_hijo
+                    )
                     eval_acumulada = utilidad_paso + (self.factor_descuento * val_futuro)
+                    # Guardar el valor acumulado (U_1 + gamma * U_futura) en el nodo hijo
+                    if ruta_hijo in self.registro_arbol:
+                        self.registro_arbol[ruta_hijo]["valor"] = eval_acumulada
                 else:
                     eval_acumulada = utilidad_paso
+                    self.registro_arbol[ruta_hijo] = {
+                        "tipo": "MAX",
+                        "alfa_in": alfa,
+                        "beta_in": beta,
+                        "valor": eval_acumulada,
+                        "visitado": True,
+                        "podado": False
+                    }
 
                 if eval_acumulada < min_eval:
                     min_eval = eval_acumulada
@@ -229,8 +290,11 @@ class EvaluadorPodaAlfaBeta:
                 beta = min(beta, eval_acumulada)
                 if beta <= alfa:
                     self.nodos_podados += 1
-                    break  # Poda Beta (Beta Cutoff)
+                    poda_ocurrida = True  # Poda Beta (Beta Cutoff)
 
+            self.registro_arbol[ruta_nodo]["valor"] = min_eval
+            self.registro_arbol[ruta_nodo]["alfa_out"] = alfa
+            self.registro_arbol[ruta_nodo]["beta_out"] = beta
             return min_eval, None
 
     def optimizar_decision(self, producto_id, producto_nombre, estado_inventario, profundidad=2):
@@ -240,6 +304,7 @@ class EvaluadorPodaAlfaBeta:
         """
         self.nodos_visitados = 0
         self.nodos_podados = 0
+        self.registro_arbol = {}
 
         # Matriz completa de utilidades inmediatas (Día 1) para análisis explicativo
         tabla_evaluacion = []
@@ -287,7 +352,8 @@ class EvaluadorPodaAlfaBeta:
             "nodos_podados": self.nodos_podados,
             "eficiencia_poda_pct": eficiencia_poda_pct,
             "matriz_evaluacion": df_matriz,
-            "profundidad_evaluada": profundidad
+            "profundidad_evaluada": profundidad,
+            "registro_arbol": self.registro_arbol.copy()
         }
 
     def generar_traza_explicativa(self, producto_nombre, estado_inventario, profundidad=3):

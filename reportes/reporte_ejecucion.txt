@@ -1,6 +1,6 @@
 ========================================================================
          INFORME DE PREDICCIÓN Y OPTIMIZACIÓN DE INVENTARIO - PYMEVISION AI
-Fecha de Emisión: 06/07/2026 23:35:48
+Fecha de Emisión: 08/07/2026 23:07:58
 ========================================================================
 
 1. RESULTADOS DE LA SIMULACIÓN AUTÓNOMA (JUNIO - AGOSTO 2026)

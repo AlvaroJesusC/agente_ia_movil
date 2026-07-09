@@ -360,12 +360,27 @@ def endpoint_poda_alfa_beta(
         nombre_archivo = "poda_alfa_beta_matriz_utilidad.png"
     elif tipo == "consolidado":
         nombre_archivo = "poda_alfa_beta_consolidado.png"
+    elif tipo == "arbol":
+        # Extraer el árbol de la ejecución real recién realizada para el producto seleccionado
+        res_arbol = resultados_poda[0]
+        if "registro_arbol" in res_arbol:
+            reportador.graficar_arbol_poda_alfa_beta(
+                res_arbol["registro_arbol"],
+                res_arbol["mejor_accion"],
+                res_arbol["producto_nombre"],
+                directorio="reportes"
+            )
+            nombre_archivo = "poda_alfa_beta_arbol.png"
+        else:
+            raise HTTPException(status_code=500, detail="No se encontró el registro real de búsqueda del árbol")
+
 
     file_path = os.path.join(ROOT_DIR, "reportes", "05_poda_alfa_beta", nombre_archivo)
     if os.path.exists(file_path):
         with open(file_path, "rb") as f:
             return Response(content=f.read(), media_type="image/png")
     raise HTTPException(status_code=500, detail="Error al generar gráfico de Poda Alfa-Beta")
+
 
 
 @app.get("/horas-pico", summary="Gráfico PNG de Patrón de Demanda por Horas Pico")

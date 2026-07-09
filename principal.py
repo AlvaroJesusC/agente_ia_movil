@@ -586,6 +586,8 @@ def ejecutar_agente():
     reportador.graficar_demanda_y_alertas(inventario_final_agosto, diccionario_predicciones_futuras, alertas_septiembre)
     reportador.graficar_patrones_horas_pico(inventario_final_agosto, diccionario_patrones_horarios)
     reportador.graficar_curva_perdida_mlp(agente_cerebro)
+    reportador.graficar_arquitectura_mlp_proyecto()
+    reportador.graficar_comportamiento_perceptrones()
     reportador.graficar_productos_mas_demandados(datos_ventas_completos)
     reportador.generar_dashboard_alertas(alertas_septiembre)
     reportador.graficar_analisis_eventos(datos_ventas_completos)
@@ -597,7 +599,23 @@ def ejecutar_agente():
     reportador.graficar_arbol_categorias_bfs_dfs(busqueda_res)
     reportador.graficar_ruta_reabastecimiento_astar(astar_res)
     reportador.graficar_resultados_poda_alfa_beta(resultados_poda_alfa_beta)
+    
+    # Generar árbol explicativo de la Poda Alfa-Beta para Inca Kola 500ml (usando la ejecución real)
+    try:
+        res_inka = next((r for r in resultados_poda_alfa_beta if r["producto_id"] == "prod_001"), None)
+        if res_inka and "registro_arbol" in res_inka:
+            reportador.graficar_arbol_poda_alfa_beta(
+                res_inka["registro_arbol"], 
+                res_inka["mejor_accion"], 
+                "Inca Kola 500ml"
+            )
+        else:
+            print("   * Advertencia: No se encontró el registro real de poda para Inca Kola.")
+    except Exception as e:
+        print(f"   * Advertencia al generar el árbol de decisión visual: {e}")
+
     reportador.graficar_mapa_calor_quiebres_final(datos_inventario_completos)
+
     
     
     generar_reporte_escrito_final(
