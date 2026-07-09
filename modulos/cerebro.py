@@ -8,6 +8,9 @@ import numpy as np
 import logging
 from prophet import Prophet
 from sklearn.neural_network import MLPRegressor
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+from sklearn.preprocessing import StandardScaler
 
 logging.getLogger('prophet').setLevel(logging.ERROR)
 logging.getLogger('cmdstanpy').setLevel(logging.ERROR)
@@ -17,6 +20,8 @@ class CerebroPredictivo:
     
     def __init__(self):
         self.modelos_horarios = {}
+        self.scalers_horarios = {}
+        self.metricas_modelos = {}
         
     def predecir_demanda_diaria(self, datos_historicos, producto_id, dias_a_predecir=7, df_festivos=None):
         #Predice la demanda diaria de un producto usando Prophet.
@@ -56,9 +61,8 @@ class CerebroPredictivo:
         prediccion_retorno["demanda_predicha"] = np.maximum(0, prediccion_retorno["demanda_predicha"])
         
         return prediccion_retorno
-
     def entrenar_modelo_horario(self, datos_ventas_hora, producto_id):
-        #eentrena una red Neuronal mlpRegressor para las ventas por hora.
+        # Entrena una red Neuronal MLPRegressor para las ventas por hora.
         
         df_prod = datos_ventas_hora[datos_ventas_hora["producto_id"] == producto_id].copy()
         
@@ -70,28 +74,79 @@ class CerebroPredictivo:
             "Viernes": 4, "Sábado": 5, "Domingo": 6
         }
         
-        df_prod["dia_semana_num"] = df_prod["dia_semana"].map(mapeo_dias).fillna(0)
-        df_prod["es_feriado_num"] = df_prod["es_feriado"].astype(int)
-        df_prod["es_fin_semana_num"] = df_prod["es_fin_semana"].astype(int)
+        # Agrupación horaria real: sumando las transacciones del mismo producto por fecha y hora
+        df_prod_hourly = df_prod.groupby(["fecha", "hora"])["cantidad_vendida"].sum().reset_index()
         
-        X = df_prod[["hora", "dia_semana_num", "es_feriado_num", "es_fin_semana_num"]]
-        y = df_prod["cantidad_vendida"]
+        # Construir mapeo de características a nivel de fecha
+        df_dates = datos_ventas_hora[["fecha", "dia_semana", "es_feriado", "es_fin_semana"]].drop_duplicates("fecha").copy()
+        df_dates["dia_semana_num"] = df_dates["dia_semana"].map(mapeo_dias).fillna(df_dates["fecha"].dt.dayofweek).astype(int)
+        df_dates["es_feriado_num"] = df_dates["es_feriado"].astype(int)
+        df_dates["es_fin_semana_num"] = df_dates["es_fin_semana"].astype(int)
+        df_dates = df_dates[["fecha", "dia_semana_num", "es_feriado_num", "es_fin_semana_num"]]
+        
+        # Crear grid completo de (fecha, hora) para todo el rango del entrenamiento
+        fechas_unicas = df_dates["fecha"].unique()
+        horas = np.arange(24)
+        grid = pd.MultiIndex.from_product([fechas_unicas, horas], names=["fecha", "hora"]).to_frame(index=False)
+        grid = grid.merge(df_dates, on="fecha", how="left")
+        
+        # Merge con las ventas horarias reales y completar con 0 las horas sin ventas
+        df_entreno = grid.merge(df_prod_hourly, on=["fecha", "hora"], how="left")
+        df_entreno["cantidad_vendida"] = df_entreno["cantidad_vendida"].fillna(0)
+        
+        # Codificación cíclica de la variable "hora"
+        df_entreno["hora_sin"] = np.sin(2 * np.pi * df_entreno["hora"] / 24)
+        df_entreno["hora_cos"] = np.cos(2 * np.pi * df_entreno["hora"] / 24)
+        
+        X = df_entreno[["hora_sin", "hora_cos", "dia_semana_num", "es_feriado_num", "es_fin_semana_num"]]
+        y = df_entreno["cantidad_vendida"]
+        
+        # Split de datos en Entrenamiento (80%) y Validación (20%)
+        X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.2, random_state=42)
+        
+        scaler = StandardScaler()
+        X_train_scaled = scaler.fit_transform(X_train)
+        X_val_scaled = scaler.transform(X_val)
         
         red_neuronal = MLPRegressor(
             hidden_layer_sizes=(50, 25),
             activation="relu",
             solver="adam",
-            max_iter=500,
+            max_iter=1000,
+            early_stopping=True,
+            n_iter_no_change=50,
+            tol=1e-5,
+            alpha=0.1,
+            validation_fraction=0.1,  # Sub-split interno para early stopping dentro del train set
             random_state=42
         )
         
-        red_neuronal.fit(X, y)
+        red_neuronal.fit(X_train_scaled, y_train)
+        
+        # Evaluación sobre el conjunto de validación externo
+        y_pred_val = red_neuronal.predict(X_val_scaled)
+        mae = mean_absolute_error(y_val, y_pred_val)
+        mse = mean_squared_error(y_val, y_pred_val)
+        rmse = np.sqrt(mse)
+        r2 = r2_score(y_val, y_pred_val)
+        
         self.modelos_horarios[producto_id] = red_neuronal
+        self.scalers_horarios[producto_id] = scaler
+        self.metricas_modelos[producto_id] = {
+            "mae": float(mae),
+            "rmse": float(rmse),
+            "r2": float(r2),
+            "n_muestras_train": int(len(X_train)),
+            "n_muestras_val": int(len(X_val)),
+            "X_val": X_val,
+            "y_val": y_val,
+            "y_pred_val": y_pred_val
+        }
+        
         return red_neuronal
 
     def predecir_patron_horario(self, producto_id, fecha, es_feriado):
-        
-        #Predice las ventas esperadas para cada una de las 24 horas del día.
+        # Predice las ventas esperadas para cada una de las 24 horas del día.
         
         modelo = self.modelos_horarios.get(producto_id)
         
@@ -114,14 +169,21 @@ class CerebroPredictivo:
                     patron_vacio[h] = 1.0
             return patron_vacio
             
+        horas = np.arange(24)
         X_pred = pd.DataFrame({
-            "hora": list(range(24)),
+            "hora_sin": np.sin(2 * np.pi * horas / 24),
+            "hora_cos": np.cos(2 * np.pi * horas / 24),
             "dia_semana_num": [dia_semana_num] * 24,
             "es_feriado_num": [es_feriado_num] * 24,
             "es_fin_semana_num": [es_fin_semana_num] * 24
         })
         
-        prediccion = modelo.predict(X_pred)
+        scaler = self.scalers_horarios.get(producto_id)
+        if scaler is not None:
+            X_pred_scaled = scaler.transform(X_pred)
+            prediccion = modelo.predict(X_pred_scaled)
+        else:
+            prediccion = modelo.predict(X_pred)
         return np.maximum(0, prediccion)
 
 

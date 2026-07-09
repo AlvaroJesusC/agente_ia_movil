@@ -38,6 +38,13 @@ graph TD
 | [principal.py](file:///c:/Users/AlvaroJ/Documents/Antigravity%20Projects/agente_ia_movil/principal.py) | 767 | 41.8 KB | Orquestación, simulación y reporte escrito |
 | **Total** | **2,217** | **~111 KB** | |
 
+### 2.1 Arquitectura de Datos y Aislamiento de Simulación
+
+Para evitar un bucle de retroalimentación crítica (*feedback loop*) y garantizar la pureza metodológica de los modelos predictivos del agente inteligente:
+* **Aislamiento de la Fuente Histórica:** El archivo `datos/ventas_datasL.csv` que contiene las transacciones de ventas reales históricas (Marzo–Mayo 2026) se trata como **estrictamente de solo lectura** durante todo el ciclo operativo del proyecto.
+* **Separación de Salidas:** Los resultados generados por el simulador de reabastecimiento diario (Junio–Agosto 2026) se graban en un archivo de resultados de simulación independiente: `datos/simulacion_ventas_resultados.csv`.
+* **Protección del Entrenamiento:** Al desvincular físicamente la fuente histórica real de los datos generados por la inferencia horaria de la IA, se garantiza que ejecuciones sucesivas del script central `principal.py` no contaminen progresivamente el conjunto de datos de entrenamiento del Perceptrón Multicapa (MLP) con sus propias salidas simuladas del pasado.
+
 ---
 
 ## 3. Detalle de Cada Módulo

@@ -161,6 +161,52 @@ def ejecutar_agente():
         
     spinner.stop()
     print("✔ [CEREBRO] Modelos predictivos entrenados con éxito.")
+    print("   * Métricas de Validación de la Red Neuronal (MLP Horario):")
+    
+    r2_list = []
+    mae_list = []
+    r2_negativos = []
+    
+    r2_min = float('inf')
+    r2_min_prod = None
+    r2_max = float('-inf')
+    r2_max_prod = None
+    
+    for prod_id in productos_ids:
+        nombre_prod = df_inventario[df_inventario["producto_id"] == prod_id].iloc[0]["producto_nombre"]
+        m = agente_cerebro.metricas_modelos.get(prod_id)
+        if m:
+            print(f"     - {nombre_prod:<25} | MAE: {m['mae']:.3f} | RMSE: {m['rmse']:.3f} | R²: {m['r2']:.3f}")
+            r2 = m['r2']
+            mae = m['mae']
+            r2_list.append(r2)
+            mae_list.append(mae)
+            
+            if r2 < r2_min:
+                r2_min = r2
+                r2_min_prod = nombre_prod
+            if r2 > r2_max:
+                r2_max = r2
+                r2_max_prod = nombre_prod
+            if r2 < 0:
+                r2_negativos.append((nombre_prod, r2))
+                
+    r2_prom = np.mean(r2_list) if r2_list else 0
+    mae_prom = np.mean(mae_list) if mae_list else 0
+    
+    print("\n   * Resumen Agregado de Validación MLP Horario:")
+    print(f"     - R² Promedio: {r2_prom:.3f}")
+    print(f"     - MAE Promedio: {mae_prom:.3f}")
+    if r2_min_prod:
+        print(f"     - R² Mínimo: {r2_min:.3f} ({r2_min_prod})")
+    if r2_max_prod:
+        print(f"     - R² Máximo: {r2_max:.3f} ({r2_max_prod})")
+        
+    if r2_negativos:
+        print("\n   ⚠ [ADVERTENCIA] Productos con R² de validación negativo (posible subajuste/ruido alto):")
+        for prod, val in r2_negativos:
+            print(f"     - ❌ {prod}: R² = {val:.3f}")
+        print("")
  
     df_inventario["fecha_dt"] = pd.to_datetime(df_inventario["fecha"])
     df_ventas["fecha_dt"] = pd.to_datetime(df_ventas["fecha"])
@@ -498,7 +544,7 @@ def ejecutar_agente():
     for col in columnas_bool_inventario:
         df_inventario[col] = df_inventario[col].map({True: "VERDADERO", False: "FALSO"}).fillna("FALSO")
         
-    df_ventas.to_csv("datos/ventas_datasL.csv", index=False, encoding="utf-8")
+    df_ventas.to_csv("datos/simulacion_ventas_resultados.csv", index=False, encoding="utf-8")
     df_inventario.to_csv("datos/inventario_datasL.csv", index=False, encoding="utf-8")
     spinner.stop()
     print("✔ [SENSOR] Archivos CSV actualizados guardados con éxito.")
@@ -506,7 +552,7 @@ def ejecutar_agente():
     # evaluación de Septiembre
     spinner = Spinner("[SENSOR] Cargando datos completos para pronóstico de Septiembre...")
     spinner.start()
-    datos_ventas_completos = sensor.cargar_ventas("datos/ventas_datasL.csv")
+    datos_ventas_completos = sensor.cargar_ventas("datos/simulacion_ventas_resultados.csv")
     datos_inventario_completos = sensor.cargar_inventario("datos/inventario_datasL.csv")
     ventas_diarias_completas = sensor.obtener_ventas_diarias_completas(datos_ventas_completos)
     
@@ -586,6 +632,7 @@ def ejecutar_agente():
     reportador.graficar_demanda_y_alertas(inventario_final_agosto, diccionario_predicciones_futuras, alertas_septiembre)
     reportador.graficar_patrones_horas_pico(inventario_final_agosto, diccionario_patrones_horarios)
     reportador.graficar_curva_perdida_mlp(agente_cerebro)
+    reportador.graficar_prediccion_vs_real_mlp(agente_cerebro)
     reportador.graficar_arquitectura_mlp_proyecto()
     reportador.graficar_comportamiento_perceptrones()
     reportador.graficar_productos_mas_demandados(datos_ventas_completos)
@@ -615,9 +662,8 @@ def ejecutar_agente():
         print(f"   * Advertencia al generar el árbol de decisión visual: {e}")
 
     reportador.graficar_mapa_calor_quiebres_final(datos_inventario_completos)
+    reportador.graficar_grafo_sistema_experto()
 
-    
-    
     generar_reporte_escrito_final(
         inventario_final_agosto, alertas_septiembre, diccionario_predicciones_futuras, datos_ventas_completos,
         total_pedidos_hechos, quiebres_evitados_contador, mermas_mitigadas_contador,
@@ -625,7 +671,9 @@ def ejecutar_agente():
         red_bayesiana=red_bayesiana,
         busqueda_res=busqueda_res,
         astar_res=astar_res,
-        resultados_poda=resultados_poda_alfa_beta
+        resultados_poda=resultados_poda_alfa_beta,
+        agente_cerebro=agente_cerebro,
+        agente_actuador=agente_actuador
     )
     spinner.stop()
     print("✔ [REPORTADOR] Reportes finales generados con éxito.")
@@ -640,9 +688,10 @@ def ejecutar_agente():
     print("  📁 03_prediccion_prophet_mlp/       (Series Temporales y Patrones Horarios)")
     print("  📁 04_alertas_y_eventos/            (Dashboard, Impacto Feriados y Tablas)")
     print("  📁 05_poda_alfa_beta/               (Nodos Evaluados, Eficiencia y Matriz Utilidad)")
+    print("  📁 06_sistema_experto/              (Grafo de Reglas e Inferencia de Decisiones)")
     print("=" * 75)
 
-def generar_reporte_escrito_final(inventario_actual, alertas, predicciones, datos_ventas, total_pedidos, quiebres_prev, mermas_prev, predicciones_completas=None, red_bayesiana=None, busqueda_res=None, astar_res=None, resultados_poda=None, ruta_salida="reportes/reporte_ejecucion.txt"):
+def generar_reporte_escrito_final(inventario_actual, alertas, predicciones, datos_ventas, total_pedidos, quiebres_prev, mermas_prev, predicciones_completas=None, red_bayesiana=None, busqueda_res=None, astar_res=None, resultados_poda=None, ruta_salida="reportes/reporte_ejecucion.txt", agente_cerebro=None, agente_actuador=None):
     # Genera el archivo consolidado de reporte escrito en disco.
     with open(ruta_salida, "w", encoding="utf-8") as archivo:
         archivo.write("========================================================================\n")
@@ -928,6 +977,38 @@ def generar_reporte_escrito_final(inventario_actual, alertas, predicciones, dato
                     df_tr = evaluador_aux.generar_traza_explicativa(first_item["producto_nombre"], st_ik, profundidad=3)
                     for _, row in df_tr.iterrows():
                         archivo.write(f"{row['accion_d1']:<18} | {row['escenario_d1']:<18} | S/. {row['u1_inmediata']:>7.2f}  | {row['stock_s2']:>8.1f}  | {row['accion_d2_optima']:<16} | S/. {row['subarbol_d2_d3']:>9.2f}  | S/. {row['total_acumulado']:>10.2f}\n")
+
+        if agente_cerebro is not None and len(agente_cerebro.metricas_modelos) > 0:
+            archivo.write("\n11. ENTRENAMIENTO Y VALIDACIÓN DE LA RED NEURONAL (MLP)\n")
+            archivo.write("------------------------------------------------------------------------\n")
+            archivo.write("Se realizó una división de datos (80% Entrenamiento, 20% Validación)\n")
+            archivo.write("para evaluar formalmente la generalización del Perceptrón Multicapa (MLPRegressor)\n")
+            archivo.write("encargado de modelar la demanda de ventas por hora.\n\n")
+            
+            archivo.write(f"{'Producto':<30} | {'Muestras Tr.':<12} | {'Muestras Val.':<13} | {'MAE':<8} | {'RMSE':<8} | {'R² Score':<10}\n")
+            archivo.write("-" * 92 + "\n")
+            for pid, met in agente_cerebro.metricas_modelos.items():
+                nombre = inventario_actual[inventario_actual["producto_id"] == pid].iloc[0]["producto_nombre"]
+                archivo.write(f"{nombre:<30} | {met['n_muestras_train']:<12} | {met['n_muestras_val']:<13} | {met['mae']:<8.3f} | {met['rmse']:<8.3f} | {met['r2']:<10.3f}\n")
+
+        # Sección 12: Sistema Experto Formal (Reglas e Inferencia Forward Chaining)
+        if agente_actuador is not None and len(agente_actuador.trazas_inferencia) > 0:
+            archivo.write("\n12. SISTEMA EXPERTO FORMAL (SÍLABO: REGLAS DE PRODUCCIÓN E INFERENCIA)\n")
+            archivo.write("------------------------------------------------------------------------\n")
+            archivo.write("Se implementó un Sistema Experto desacoplado con un Motor de Inferencia por\n")
+            archivo.write("Encadenamiento hacia Adelante (Forward Chaining) para la toma de decisiones.\n\n")
+            
+            # Obtener traza explicativa del primer producto de la lista
+            primer_pid = list(agente_actuador.trazas_inferencia.keys())[0]
+            traza_prod = agente_actuador.trazas_inferencia[primer_pid]
+            
+            archivo.write(f"12.1 Traza de Inferencia Detallada (Ejemplo: {traza_prod.get('producto_nombre', primer_pid)}):\n")
+            archivo.write(f"  * Hechos iniciales (Base de Hechos) : {traza_prod['hechos_iniciales']}\n")
+            archivo.write(f"  * Hechos finales inferidos          : {traza_prod['hechos_finales']}\n\n")
+            archivo.write("12.2 Registro de Pasadas del Motor de Inferencia:\n")
+            for linea in traza_prod["traza"]:
+                archivo.write(f"  {linea}\n")
+            archivo.write("\n")
 
         archivo.write("\n========================================================================\n")
         archivo.write("Fin del reporte de control de stock y optimización de ventas.\n")

@@ -123,25 +123,63 @@ def graficar_patrones_horas_pico(df_inventario, dict_patrones, directorio="repor
         return
         
     plt.figure(figsize=(12, 6))
-    for prod_id, nombre_prod in productos_seleccionados:
+    ciclo_colores = plt.rcParams['axes.prop_cycle'].by_key()['color']
+    warnings_no_patron = []
+    
+    for idx, (prod_id, nombre_prod) in enumerate(productos_seleccionados):
         patron = dict_patrones.get(prod_id)
         if patron is not None:
-            plt.plot(range(24), patron, marker="o", linewidth=2, label=nombre_prod)
+            color = ciclo_colores[idx % len(ciclo_colores)]
+            # Graficar curva principal
+            plt.plot(range(24), patron, marker="o", linewidth=2.5, label=nombre_prod, color=color)
             
-    plt.axvspan(12, 14, color="#F5B7B1", alpha=0.3, label="Pico Almuerzo (12-14h)")
-    plt.axvspan(18, 21, color="#D4E6F1", alpha=0.3, label="Pico Noche (18-21h)")
+            # Identificación dinámica de picos
+            # Almuerzo (12-14h)
+            lunch_idx = 12 + np.argmax(patron[12:15])
+            is_lunch_local = (patron[lunch_idx] >= patron[lunch_idx - 1]) and (patron[lunch_idx] >= patron[lunch_idx + 1])
+            
+            # Noche (18-21h)
+            night_idx = 18 + np.argmax(patron[18:22])
+            is_night_local = (patron[night_idx] >= patron[night_idx - 1]) and (patron[night_idx] >= patron[night_idx + 1])
+            
+            if is_lunch_local and is_night_local:
+                # Graficar estrella en los picos reales validados
+                plt.scatter([lunch_idx, night_idx], [patron[lunch_idx], patron[night_idx]], 
+                            color=color, marker="*", s=180, zorder=5, 
+                            edgecolors="black", linewidths=1.2)
+                
+                # Sombras verticales sutiles en la hora pico de este producto
+                plt.axvspan(lunch_idx - 0.25, lunch_idx + 0.25, color=color, alpha=0.08)
+                plt.axvspan(night_idx - 0.25, night_idx + 0.25, color=color, alpha=0.08)
+                
+                # Anotaciones con la hora exacta
+                plt.text(lunch_idx, patron[lunch_idx] + 0.05, f"{lunch_idx}h", 
+                         ha="center", va="bottom", fontsize=9, fontweight="bold", color=color)
+                plt.text(night_idx, patron[night_idx] + 0.05, f"{night_idx}h", 
+                         ha="center", va="bottom", fontsize=9, fontweight="bold", color=color)
+            else:
+                warnings_no_patron.append(nombre_prod)
+                print(f"[AUDITORÍA MLP] El producto {nombre_prod} ({prod_id}) no muestra el patrón bimodal esperado.")
+                
+    # Leyenda para los marcadores de picos reales
+    plt.scatter([], [], color="grey", marker="*", s=120, edgecolors="black", label="Picos Reales Validados (argmax)")
     
-    plt.title("Patrón de Demanda Proyectada por Hora (Red Neuronal MLP)", fontsize=14, fontweight="bold", color=COLOR_PRIMARIO)
+    titulo = "Patrón de Demanda Proyectada por Hora (Red Neuronal MLP)"
+    if warnings_no_patron:
+        titulo += f"\nAdvertencia: Sin patrón bimodal en {', '.join(warnings_no_patron)}"
+        
+    plt.title(titulo, fontsize=13, fontweight="bold", color=COLOR_PRIMARIO)
     plt.xlabel("Hora del Día (Formato 24h)", fontsize=11)
     plt.ylabel("Demanda Estimada (Unidades/Hora)", fontsize=11)
     plt.xticks(range(24))
-    plt.grid(True)
+    plt.grid(True, linestyle="--", alpha=0.5)
     plt.legend(fontsize=10, loc="upper left")
+    plt.tight_layout()
     plt.savefig(os.path.join(directorio, "03_prediccion_prophet_mlp", "patron_horas_pico.png"), dpi=150, bbox_inches="tight")
     plt.close()
 
 def graficar_curva_perdida_mlp(agente_cerebro, directorio="reportes"):
-    # Grafica la curva de pérdida (Loss Curve) del modelo MLP para un producto representativo (Inca Kola 500ml - prod_001)
+    # Grafica la curva de pérdida (Loss Curve) del modelo MLP y el score de validación para un producto representativo (Inca Kola 500ml - prod_001)
     # para demostrar la convergencia y ausencia de sobreajuste.
     asegurar_directorio_reportes(directorio)
     
@@ -155,16 +193,79 @@ def graficar_curva_perdida_mlp(agente_cerebro, directorio="reportes"):
     if modelo is None or not hasattr(modelo, "loss_curve_"):
         return
         
-    plt.figure(figsize=(9, 5))
-    plt.plot(modelo.loss_curve_, color=COLOR_PRIMARIO, linewidth=2.5, label="Error de Entrenamiento (Loss)")
-    plt.title("Curva de Pérdida (Loss Curve) de la Red Neuronal MLP\nProducto: Inca Kola 500ml (prod_001)", fontsize=12, fontweight="bold", color=COLOR_PRIMARIO)
-    plt.xlabel("Epochs (Ciclos de Entrenamiento)", fontsize=10)
-    plt.ylabel("Pérdida (Loss / MSE)", fontsize=10)
-    plt.grid(True, linestyle="--", alpha=0.5, color="#EEEEEE")
-    plt.legend(fontsize=10, loc="upper right")
+    fig, ax1 = plt.subplots(figsize=(9, 5))
+    
+    # Eje 1: Pérdida de entrenamiento
+    color = COLOR_PRIMARIO
+    ax1.set_xlabel("Epochs (Ciclos de Entrenamiento)", fontsize=10)
+    ax1.set_ylabel("Pérdida (Loss)", color=color, fontsize=10)
+    line1 = ax1.plot(modelo.loss_curve_, color=color, linewidth=2.5, label="Pérdida de Entrenamiento (MSE)")
+    ax1.tick_params(axis='y', labelcolor=color)
+    ax1.grid(True, linestyle="--", alpha=0.5, color="#EEEEEE")
+    
+    # Eje 2: Puntuación de validación
+    lines = line1
+    if hasattr(modelo, "validation_scores_") and modelo.validation_scores_ is not None and len(modelo.validation_scores_) > 0:
+        ax2 = ax1.twinx()
+        color2 = COLOR_EXITO
+        ax2.set_ylabel("R² Score de Validación", color=color2, fontsize=10)
+        line2 = ax2.plot(modelo.validation_scores_, color=color2, linewidth=2.5, linestyle="--", label="Score de Validación (R²)")
+        ax2.tick_params(axis='y', labelcolor=color2)
+        lines = line1 + line2
+        
+    labels = [l.get_label() for l in lines]
+    ax1.legend(lines, labels, fontsize=10, loc="upper right")
+    
+    plt.title("Convergencia del Modelo: Pérdida de Entrenamiento (izq.) vs R² de Validación (der.)\nProducto: Inca Kola 500ml (prod_001)", fontsize=11, fontweight="bold", color=COLOR_PRIMARIO)
     plt.tight_layout()
     
     plot_path = os.path.join(directorio, "03_prediccion_prophet_mlp", "curva_perdida_mlp.png")
+    plt.savefig(plot_path, dpi=150, bbox_inches="tight")
+    plt.close()
+
+def graficar_prediccion_vs_real_mlp(agente_cerebro, directorio="reportes"):
+    # Grafica los valores predichos vs reales de la red neuronal MLP en el conjunto de validación
+    # para demostrar visualmente la precisión del ajuste.
+    asegurar_directorio_reportes(directorio)
+    
+    prod_id = "prod_001"
+    metricas = agente_cerebro.metricas_modelos.get(prod_id)
+    if metricas is None:
+        for p_id, met in agente_cerebro.metricas_modelos.items():
+            if met is not None and "y_val" in met:
+                prod_id = p_id
+                metricas = met
+                break
+                
+    if metricas is None or "y_val" not in metricas:
+        return
+        
+    y_val = metricas["y_val"]
+    y_pred_val = metricas["y_pred_val"]
+    r2 = metricas["r2"]
+    mae = metricas["mae"]
+    
+    plt.figure(figsize=(9, 5))
+    # Gráfica de dispersión real vs predicho
+    plt.scatter(y_val, y_pred_val, color=COLOR_SECUNDARIO, alpha=0.6, edgecolors='none', s=40, label="Observaciones de Validación")
+    
+    # Línea de identidad (predicción perfecta)
+    # Evitar errores si los datos están vacíos
+    if len(y_val) > 0:
+        val_min = min(np.min(y_val), np.min(y_pred_val))
+        val_max = max(np.max(y_val), np.max(y_pred_val))
+        lims = [val_min, val_max]
+        plt.plot(lims, lims, color=COLOR_ALERTA_ALTA, linestyle="--", alpha=0.8, linewidth=2, label="Predicción Perfecta (x=y)")
+    
+    plt.title(f"Ajuste de Predicción MLP (Predicho vs Real en Validación)\nProducto: Inca Kola 500ml (prod_001) | R²: {r2:.3f} | MAE: {mae:.2f}", 
+              fontsize=12, fontweight="bold", color=COLOR_PRIMARIO)
+    plt.xlabel("Ventas Reales (unidades)", fontsize=10)
+    plt.ylabel("Ventas Predichas (unidades)", fontsize=10)
+    plt.grid(True, linestyle="--", alpha=0.3)
+    plt.legend(fontsize=10, loc="upper left")
+    plt.tight_layout()
+    
+    plot_path = os.path.join(directorio, "03_prediccion_prophet_mlp", "prediccion_vs_real_mlp.png")
     plt.savefig(plot_path, dpi=150, bbox_inches="tight")
     plt.close()
 
@@ -1508,4 +1609,144 @@ def graficar_arbol_poda_alfa_beta(registro_arbol, mejor_accion, prod_nombre, dir
     ruta_salida = os.path.join(subcarpeta_poda, "poda_alfa_beta_arbol.png")
     fig.savefig(ruta_salida, dpi=150, bbox_inches="tight")
     plt.close(fig)
+
+
+def graficar_grafo_sistema_experto(directorio="reportes"):
+    """
+    Genera y guarda un diagrama explicativo de red para el Sistema Experto,
+    mostrando las reglas de producción, los antecedentes y el encadenamiento
+    hacia adelante de forma visual.
+    """
+    subcarpeta_se = os.path.join(directorio, "06_sistema_experto")
+    os.makedirs(subcarpeta_se, exist_ok=True)
+
+    fig, ax = plt.subplots(figsize=(11, 6.5))
+    ax.axis("off")
+
+    # Posiciones fijas de los nodos (X, Y) para un diseño limpio sin solapamientos
+    posiciones = {
+        # Hechos Iniciales (X=1)
+        "recurso_criticamente_bajo": (1.0, 5.5),
+        "tiempo_reposicion_inminente": (1.0, 4.5),
+        "es_perecedero": (1.0, 2.5),
+        "stock_excedente_critico": (1.0, 1.5),
+        "vencimiento_muy_cercano": (1.0, 0.5),
+
+        # Reglas Lógicas (X=3)
+        "R1_RIESGO_QUIEBRE_CRITICO": (3.0, 5.0),
+        "R3_ORDEN_EMERGENCIA": (3.0, 3.5),
+        "R5_RIESGO_VENCIMIENTO_CRITICO": (3.0, 1.5),
+        "R7_PROMO_VENTA_RAPIDA_30": (3.0, 0.0),
+
+        # Consecuentes / Alertas Inferidas (X=5)
+        "RIESGO_QUIEBRE_CRITICO": (5.0, 5.0),
+        "ACCION_ORDEN_EMERGENCIA": (5.0, 3.5),
+        "RIESGO_VENCIMIENTO_CRITICO": (5.0, 1.5),
+        "ACCION_PROMO_DESCUENTO_30": (5.0, 0.0)
+    }
+
+    # Conexiones (Flechas de inferencia)
+    conexiones = [
+        # Inferencia de Quiebre Crítico
+        ("recurso_criticamente_bajo", "R1_RIESGO_QUIEBRE_CRITICO"),
+        ("tiempo_reposicion_inminente", "R1_RIESGO_QUIEBRE_CRITICO"),
+        ("R1_RIESGO_QUIEBRE_CRITICO", "RIESGO_QUIEBRE_CRITICO"),
+        
+        # Encadenamiento hacia Adelante (Pasada 2)
+        ("RIESGO_QUIEBRE_CRITICO", "R3_ORDEN_EMERGENCIA"),
+        ("R3_ORDEN_EMERGENCIA", "ACCION_ORDEN_EMERGENCIA"),
+
+        # Inferencia de Vencimiento Crítico
+        ("es_perecedero", "R5_RIESGO_VENCIMIENTO_CRITICO"),
+        ("stock_excedente_critico", "R5_RIESGO_VENCIMIENTO_CRITICO"),
+        ("vencimiento_muy_cercano", "R5_RIESGO_VENCIMIENTO_CRITICO"),
+        ("R5_RIESGO_VENCIMIENTO_CRITICO", "RIESGO_VENCIMIENTO_CRITICO"),
+
+        # Encadenamiento hacia Adelante (Pasada 2)
+        ("RIESGO_VENCIMIENTO_CRITICO", "R7_PROMO_VENTA_RAPIDA_30"),
+        ("R7_PROMO_VENTA_RAPIDA_30", "ACCION_PROMO_DESCUENTO_30")
+    ]
+
+    # Colores temáticos
+    color_hecho = "#EBF5FB"       # Azul claro
+    color_regla = "#FEF9E7"       # Amarillo claro
+    color_consecuente = "#FDEDEC"  # Rojo/Naranja claro
+    
+    border_hecho = "#2980B9"
+    border_regla = "#F39C12"
+    border_consecuente = "#C0392B"
+
+    # Dibujar conexiones (flechas)
+    for origen, destino in conexiones:
+        x1, y1 = posiciones[origen]
+        x2, y2 = posiciones[destino]
+        
+        # Ajuste de bordes para que las flechas no toquen el centro de los textos
+        dx = x2 - x1
+        dy = y2 - y1
+        l = np.sqrt(dx**2 + dy**2)
+        
+        x1_adj = x1 + (0.5 * dx / l)
+        y1_adj = y1 + (0.15 * dy / l)
+        x2_adj = x2 - (0.55 * dx / l)
+        y2_adj = y2 - (0.15 * dy / l)
+        
+        ax.annotate("", xy=(x2_adj, y2_adj), xytext=(x1_adj, y1_adj),
+                    arrowprops=dict(arrowstyle="-|>", color="#7F8C8D", lw=1.5, mutation_scale=12))
+
+    # Dibujar nodos de texto
+    for nodo, (x, y) in posiciones.items():
+        # Clasificar el nodo
+        if nodo.startswith("R") and "_" in nodo:
+            # Regla
+            lbl = nodo
+            color_bg = color_regla
+            color_edge = border_regla
+            fs = 8.5
+            style = "italic"
+        elif nodo.startswith("ACCION_") or nodo.startswith("RIESGO_"):
+            # Consecuente
+            lbl = nodo.replace("_", "\n")
+            color_bg = color_consecuente
+            color_edge = border_consecuente
+            fs = 8.5
+            style = "normal"
+        else:
+            # Hecho
+            lbl = nodo.replace("_", "\n")
+            color_bg = color_hecho
+            color_edge = border_hecho
+            fs = 8.5
+            style = "normal"
+
+        bbox_props = dict(boxstyle="round,pad=0.5", facecolor=color_bg, edgecolor=color_edge, linewidth=1.5)
+        ax.text(x, y, lbl, ha="center", va="center", fontsize=fs, fontweight="bold", color="#2C3E50", bbox=bbox_props, style=style)
+
+    # Añadir títulos de columnas
+    ax.text(1.0, 6.2, "BASE DE HECHOS\n(Entradas del Agente)", ha="center", va="bottom", fontsize=10.5, fontweight="bold", color=border_hecho)
+    ax.text(3.0, 6.2, "BASE DE REGLAS\n(Base de Conocimientos)", ha="center", va="bottom", fontsize=10.5, fontweight="bold", color=border_regla)
+    ax.text(5.0, 6.2, "INFERENCIAS FINALES\n(Forward Chaining)", ha="center", va="bottom", fontsize=10.5, fontweight="bold", color=border_consecuente)
+
+    ax.set_ylim(-0.5, 6.7)
+    ax.set_xlim(0.2, 5.8)
+
+    plt.title("Sistema Experto de Gestión de Inventarios (Grafo de Reglas e Inferencia)", 
+              fontsize=14, fontweight="bold", color=COLOR_PRIMARIO, pad=15)
+    
+    # Leyenda explicativa en la parte inferior
+    explicacion_se = (
+        "Mecanismo de Inferencia por Encadenamiento hacia Adelante (Forward Chaining):\n"
+        "1. Ciclo 1: El motor lee los hechos en memoria y dispara las reglas R1 y R5, infiriendo [RIESGO_QUIEBRE_CRITICO] y [RIESGO_VENCIMIENTO_CRITICO].\n"
+        "2. Ciclo 2: Los nuevos hechos ingresan a la memoria y satisfacen los antecedentes de las reglas de acción R3 y R7.\n"
+        "3. Inferencia Final: El motor deduce [ACCION_ORDEN_EMERGENCIA] y [ACCION_PROMO_DESCUENTO_30] como medidas correctivas recomendadas."
+    )
+    fig.text(0.5, 0.02, explicacion_se, ha="center", va="bottom", fontsize=9, color="#1C2833",
+             bbox=dict(boxstyle="round,pad=0.6", facecolor="#F8F9F9", edgecolor="#BDC3C7", alpha=0.9))
+
+    plt.tight_layout(rect=[0, 0.12, 1, 0.98])
+    
+    ruta_salida = os.path.join(subcarpeta_se, "arbol_reglas_inferencia.png")
+    fig.savefig(ruta_salida, dpi=150, bbox_inches="tight")
+    plt.close(fig)
+
 

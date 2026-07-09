@@ -424,5 +424,16 @@ def endpoint_mapa_calor_final():
     raise HTTPException(status_code=500, detail="Error al generar mapa de calor final")
 
 
+@app.get("/sistema-experto", summary="Gráfico PNG del Árbol de Reglas e Inferencia del Sistema Experto")
+def endpoint_sistema_experto():
+    """Devuelve directamente la imagen PNG que ilustra el grafo de inferencia del Sistema Experto."""
+    reportador.graficar_grafo_sistema_experto(directorio="reportes")
+    file_path = os.path.join(ROOT_DIR, "reportes", "06_sistema_experto", "arbol_reglas_inferencia.png")
+    if os.path.exists(file_path):
+        with open(file_path, "rb") as f:
+            return Response(content=f.read(), media_type="image/png")
+    raise HTTPException(status_code=500, detail="Error al generar gráfico de la red de inferencia del sistema experto")
+
+
 
 
