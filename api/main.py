@@ -507,26 +507,32 @@ def endpoint_dashboard_horas_pico():
                 
     picos_globales = sorted(list(set(picos_globales)))
     
-    # Generar interpretación amigable para el bodeguero según el gráfico
+    # Generar interpretación estructurada para Flutter
     tiene_lunch = any(p in [12, 13, 14] for p in picos_globales)
     tiene_night = any(p in [18, 19, 20, 21] for p in picos_globales)
     
-    lineas = ["Picos de demanda detectados para hoy:"]
+    picos_list = []
     if tiene_lunch:
-        lineas.append("• Almuerzo (12:00 - 14:00): Alta salida de Bebidas y Lácteos. ¡Ten bebidas heladas listas!")
+        picos_list.append({
+            "horario": "Almuerzo (12:00 - 14:00)",
+            "detalle": "Alta salida de Bebidas y Lácteos. ¡Ten bebidas heladas listas!"
+        })
     if tiene_night:
-        lineas.append("• Tarde/Noche (18:00 - 20:00): Mayor venta de Snacks y Abarrotes. Alista pedidos y empaques con anticipación.")
-    if not tiene_lunch and not tiene_night:
-        lineas.append("• Horario regular: No se detectan picos extremos de demanda hoy. Flujo de trabajo estándar.")
-    else:
-        lineas.append("Recomendación: Planifica tu stock y personal para cubrir con mayor velocidad estos horarios de mayor congestión.")
+        picos_list.append({
+            "horario": "Tarde/Noche (18:00 - 20:00)",
+            "detalle": "Mayor venta de Snacks y Abarrotes. Alista pedidos y empaques con anticipación."
+        })
         
-    interpretacion_txt = "\n".join(lineas)
+    interpretacion_struct = {
+        "titulo": "Picos de demanda detectados para hoy:",
+        "picos": picos_list,
+        "recomendacion": "Planifica tu stock y personal para cubrir con mayor velocidad estos horarios de mayor congestión." if (tiene_lunch or tiene_night) else "No se requieren acciones especiales hoy."
+    }
     
     return JSONResponse(content={
         "productos": productos_list,
         "picos_globales": picos_globales,
-        "interpretacion": interpretacion_txt
+        "interpretacion": interpretacion_struct
     })
 
 
