@@ -439,6 +439,74 @@ def endpoint_sistema_experto():
     raise HTTPException(status_code=500, detail="Error al generar gráfico de la red de inferencia del sistema experto")
 
 
+@app.get("/api/v1/dashboard/horas-pico", summary="Datos JSON de Curvas de Demanda por Hora para Productos Clave")
+def endpoint_dashboard_horas_pico():
+    """
+    Retorna un JSON estructurado con los datos de las curvas de demanda por hora
+    (horas 0-23) para cada producto clave analizado.
+    """
+    import matplotlib.colors as mcolors
+    df_inv = STATE["df_inventario"]
+    patrones = STATE["patrones_horarios"]
+    
+    if df_inv is None or not patrones:
+        raise HTTPException(status_code=503, detail="El sistema está inicializando sus datos. Por favor espere.")
+        
+    categorias_clave = ["Bebidas", "Snacks", "Lácteos", "Abarrotes"]
+    productos_seleccionados = []
+    
+    for cat in categorias_clave:
+        prods_cat = df_inv[df_inv["categoria"] == cat]
+        if not prods_cat.empty:
+            productos_seleccionados.append((prods_cat.iloc[0]["producto_id"], prods_cat.iloc[0]["producto_nombre"]))
+            
+    if not productos_seleccionados:
+        return JSONResponse(content={"productos": [], "picos_globales": []})
+        
+    ciclo_colores = plt.rcParams['axes.prop_cycle'].by_key()['color']
+    productos_list = []
+    picos_globales = []
+    
+    for idx, (prod_id, nombre_prod) in enumerate(productos_seleccionados):
+        patron = patrones.get(prod_id)
+        if patron is not None:
+            raw_color = ciclo_colores[idx % len(ciclo_colores)]
+            color = mcolors.to_hex(raw_color)
+            valores_por_hora = [round(float(val), 4) for val in patron]
+            
+            # Identificación dinámica de picos
+            # Almuerzo (12-14h)
+            lunch_idx = 12 + int(np.argmax(patron[12:15]))
+            is_lunch_local = (patron[lunch_idx] >= patron[lunch_idx - 1]) and (patron[lunch_idx] >= patron[lunch_idx + 1])
+            
+            # Noche (18-21h)
+            night_idx = 18 + int(np.argmax(patron[18:22]))
+            is_night_local = (patron[night_idx] >= patron[night_idx - 1]) and (patron[night_idx] >= patron[night_idx + 1])
+            
+            # Hora pico general
+            hora_pico = int(np.argmax(patron))
+            valor_pico = round(float(patron[hora_pico]), 4)
+            
+            productos_list.append({
+                "producto_id": prod_id,
+                "producto_nombre": nombre_prod,
+                "color_hex": color,
+                "valores_por_hora": valores_por_hora,
+                "hora_pico": hora_pico,
+                "valor_pico": valor_pico
+            })
+            
+            if is_lunch_local and is_night_local:
+                picos_globales.extend([lunch_idx, night_idx])
+                
+    picos_globales = sorted(list(set(picos_globales)))
+    
+    return JSONResponse(content={
+        "productos": productos_list,
+        "picos_globales": picos_globales
+    })
+
+
 @app.get("/api/v1/dashboard/bodega", summary="Dashboard simplificado en JSON para el bodeguero")
 def endpoint_dashboard_bodega():
     """
