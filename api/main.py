@@ -443,7 +443,8 @@ def endpoint_sistema_experto():
 def endpoint_dashboard_horas_pico():
     """
     Retorna un JSON estructurado con los datos de las curvas de demanda por hora
-    (horas 0-23) para cada producto clave analizado.
+    (horas 0-23) para cada producto clave analizado, incluyendo una interpretación
+    práctica orientada al bodeguero.
     """
     import matplotlib.colors as mcolors
     df_inv = STATE["df_inventario"]
@@ -458,10 +459,12 @@ def endpoint_dashboard_horas_pico():
     for cat in categorias_clave:
         prods_cat = df_inv[df_inv["categoria"] == cat]
         if not prods_cat.empty:
-            productos_seleccionados.append((prods_cat.iloc[0]["producto_id"], prods_cat.iloc[0]["producto_nombre"]))
+            # Obtener el registro más reciente
+            prod_reciente = prods_cat.sort_values("fecha").iloc[-1]
+            productos_seleccionados.append((prod_reciente["producto_id"], prod_reciente["producto_nombre"]))
             
     if not productos_seleccionados:
-        return JSONResponse(content={"productos": [], "picos_globales": []})
+        return JSONResponse(content={"productos": [], "picos_globales": [], "interpretacion": "No hay datos de productos disponibles."})
         
     ciclo_colores = plt.rcParams['axes.prop_cycle'].by_key()['color']
     productos_list = []
@@ -496,14 +499,34 @@ def endpoint_dashboard_horas_pico():
                 "valor_pico": valor_pico
             })
             
-            if is_lunch_local and is_night_local:
-                picos_globales.extend([lunch_idx, night_idx])
+            # Añadir picos detectados de forma independiente
+            if is_lunch_local:
+                picos_globales.append(lunch_idx)
+            if is_night_local:
+                picos_globales.append(night_idx)
                 
     picos_globales = sorted(list(set(picos_globales)))
     
+    # Generar interpretación amigable para el bodeguero según el gráfico
+    tiene_lunch = any(p in [12, 13, 14] for p in picos_globales)
+    tiene_night = any(p in [18, 19, 20, 21] for p in picos_globales)
+    
+    lineas = ["Picos de demanda detectados para hoy:"]
+    if tiene_lunch:
+        lineas.append("• Almuerzo (12:00 - 14:00): Alta salida de Bebidas y Lácteos. ¡Ten bebidas heladas listas!")
+    if tiene_night:
+        lineas.append("• Tarde/Noche (18:00 - 20:00): Mayor venta de Snacks y Abarrotes. Alista pedidos y empaques con anticipación.")
+    if not tiene_lunch and not tiene_night:
+        lineas.append("• Horario regular: No se detectan picos extremos de demanda hoy. Flujo de trabajo estándar.")
+    else:
+        lineas.append("Recomendación: Planifica tu stock y personal para cubrir con mayor velocidad estos horarios de mayor congestión.")
+        
+    interpretacion_txt = "\n".join(lineas)
+    
     return JSONResponse(content={
         "productos": productos_list,
-        "picos_globales": picos_globales
+        "picos_globales": picos_globales,
+        "interpretacion": interpretacion_txt
     })
 
 
