@@ -91,16 +91,22 @@ def inicializar_sistema():
     observaciones_bn = red_bayesiana.preparar_datos_entrenamiento(df_ventas, df_inventario)
     red_bayesiana.aprender_parametros(observaciones_bn)
 
-    # Evaluación inicial de alertas (solo para el estado de inventario más reciente)
+    # Evaluación inicial de alertas para el estado de inventario actual (Hoy: 2026-07-09)
     actuador_opt = actuador.ActuadorOptimizado()
     alertas = []
-    ultima_fecha_inv = df_inventario["fecha"].max()
-    df_inventario_actual = df_inventario[df_inventario["fecha"] == ultima_fecha_inv]
+    fecha_hoy = pd.to_datetime("2026-07-09")
+    df_inventario_actual = df_inventario_full[df_inventario_full["fecha"] == fecha_hoy]
+    if df_inventario_actual.empty:
+        fecha_hoy = df_inventario_full["fecha"].max()
+        df_inventario_actual = df_inventario_full[df_inventario_full["fecha"] == fecha_hoy]
+        
     for _, fila in df_inventario_actual.iterrows():
         prod_id = fila["producto_id"]
         pred_prod = predicciones[prod_id]
+        # Filtrar predicciones para que empiecen hoy
+        pred_prod_hoy = pred_prod[pred_prod["fecha"] >= fecha_hoy].reset_index(drop=True)
         patron_prod = patrones_horarios[prod_id]
-        al_prod = actuador_opt.evaluar_producto(fila, pred_prod, patron_prod, [], red_bayesiana=red_bayesiana)
+        al_prod = actuador_opt.evaluar_producto(fila, pred_prod_hoy, patron_prod, [], red_bayesiana=red_bayesiana)
         alertas.extend(al_prod)
 
     STATE["df_ventas"] = df_ventas_full
@@ -175,7 +181,8 @@ def endpoint_predecir(producto_id: str = Query(None, description="ID del product
         stock_transito = fila_inv["stock_transito"]
         tiempo_reposicion = int(fila_inv["tiempo_reposicion_dias"])
 
-        pred = preds[producto_id].head(30)
+        pred = preds[producto_id]
+        pred = pred[pred["fecha"] >= pd.to_datetime("2026-07-09")].head(30)
         fechas = pred["fecha"]
         demanda = pred["demanda_predicha"]
 
@@ -659,8 +666,8 @@ def endpoint_dashboard_bodega():
           "accion_sugerida": f"Aplicar promoción. Vender a S/. {precio_oferta:.2f} para liquidar stock."
         })
 
-    # 4. Ventas por Categoría (Top Productos)
-    df_ventas_temp = df_ventas.copy()
+    # 4. Ventas por Categoría (Top Productos) - Filtrado desde Julio (Mes 7) en adelante
+    df_ventas_temp = df_ventas[df_ventas["fecha"] >= pd.to_datetime("2026-07-01")].copy()
     df_ventas_temp["monto_venta"] = df_ventas_temp["cantidad_vendida"] * df_ventas_temp["precio_aplicado"]
     
     ventas_categoria = df_ventas_temp.groupby("categoria")["monto_venta"].sum()
@@ -688,7 +695,7 @@ def endpoint_dashboard_bodega():
             top_productos.append({
                 "puesto": puesto,
                 "nombre": fila_p.producto_nombre,
-                "ventas_estimadas_mes": int(fila_p.cantidad_vendida / 3)
+                "ventas_estimadas_mes": int(fila_p.cantidad_vendida / 2)
             })
             
         color_cat = colores_categoria.get(cat_nombre, "#7F8C8D")
