@@ -1,0 +1,139 @@
+{
+  "resumen_hoy": {
+    "alertas_rojas": 16,
+    "alertas_amarillas": 1,
+    "dinero_en_riesgo_vencimiento": 264.6
+  },
+  "recomendaciones_compra": [
+    {
+      "producto_id": "prod_001",
+      "producto_nombre": "Inca Kola 500ml",
+      "prioridad": "ALTA",
+      "color_alerta": "rojo",
+      "motivo": "Hay riesgo de quedarse sin stock debido a: fin de semana.",
+      "sugerencia": "Se recomienda realizar un pedido de 24 unidades."
+    },
+    {
+      "producto_id": "prod_002",
+      "producto_nombre": "Coca Cola 500ml",
+      "prioridad": "MEDIA",
+      "color_alerta": "amarillo",
+      "motivo": "El stock actual es insuficiente para cubrir las ventas de los próximos días.",
+      "sugerencia": "Se recomienda realizar un pedido de 48 unidades."
+    },
+    {
+      "producto_id": "prod_003",
+      "producto_nombre": "Agua San Luis 625ml",
+      "prioridad": "ALTA",
+      "color_alerta": "rojo",
+      "motivo": "Hay riesgo de quedarse sin stock debido a: fin de semana.",
+      "sugerencia": "Se recomienda realizar un pedido de 12 unidades."
+    },
+    {
+      "producto_id": "prod_004",
+      "producto_nombre": "Yogurt Gloria 1L",
+      "prioridad": "ALTA",
+      "color_alerta": "rojo",
+      "motivo": "Hay riesgo de quedarse sin stock debido a: fin de semana.",
+      "sugerencia": "Se recomienda realizar un pedido de 36 unidades."
+    },
+    {
+      "producto_id": "prod_005",
+      "producto_nombre": "Leche Gloria 1L",
+      "prioridad": "ALTA",
+      "color_alerta": "rojo",
+      "motivo": "Hay riesgo de quedarse sin stock debido a: fin de semana.",
+      "sugerencia": "Se recomienda realizar un pedido de 36 unidades."
+    },
+    {
+      "producto_id": "prod_006",
+      "producto_nombre": "Lays 42g",
+      "prioridad": "ALTA",
+      "color_alerta": "rojo",
+      "motivo": "Hay riesgo de quedarse sin stock debido a: fin de semana.",
+      "sugerencia": "Se recomienda realizar un pedido de 24 unidades."
+    },
+    {
+      "producto_id": "prod_007",
+      "producto_nombre": "Doritos 42g",
+      "prioridad": "ALTA",
+      "color_alerta": "rojo",
+      "motivo": "Hay riesgo de quedarse sin stock debido a: fin de semana, stock bajo.",
+      "sugerencia": "Se recomienda realizar un pedido de 48 unidades."
+    },
+    {
+      "producto_id": "prod_008",
+      "producto_nombre": "InkaChips 40g",
+      "prioridad": "ALTA",
+      "color_alerta": "rojo",
+      "motivo": "Hay riesgo de quedarse sin stock debido a: fin de semana.",
+      "sugerencia": "Se recomienda realizar un pedido de 48 unidades."
+    },
+    {
+      "producto_id": "prod_009",
+      "producto_nombre": "Sublime 30g",
+      "prioridad": "ALTA",
+      "color_alerta": "rojo",
+      "motivo": "Hay riesgo de quedarse sin stock debido a: fin de semana.",
+      "sugerencia": "Se recomienda realizar un pedido de 24 unidades."
+    },
+    {
+      "producto_id": "prod_010",
+      "producto_nombre": "Pan de Molde Bimbo 500g",
+      "prioridad": "ALTA",
+      "color_alerta": "rojo",
+      "motivo": "Hay riesgo de quedarse sin stock debido a: fin de semana.",
+      "sugerencia": "Se recomienda realizar un pedido de 48 unidades."
+    },
+    {
+      "producto_id": "prod_011",
+      "producto_nombre": "Arroz Costeño 1kg",
+      "prioridad": "ALTA",
+      "color_alerta": "rojo",
+      "motivo": "Hay riesgo de quedarse sin stock debido a: demanda muy alta, fin de semana.",
+      "sugerencia": "Se recomienda realizar un pedido de 48 unidades."
+    },
+    {
+      "producto_id": "prod_012",
+      "producto_nombre": "Aceite Primor 1L",
+      "prioridad": "ALTA",
+      "color_alerta": "rojo",
+      "motivo": "Hay riesgo de quedarse sin stock debido a: fin de semana.",
+      "sugerencia": "Se recomienda realizar un pedido de 36 unidades."
+    },
+    {
+      "producto_id": "prod_013",
+      "producto_nombre": "Fideos Don Vittorio 500g",
+      "prioridad": "ALTA",
+      "color_alerta": "rojo",
+      "motivo": "Hay riesgo de quedarse sin stock debido a: fin de semana.",
+      "sugerencia": "Se recomienda realizar un pedido de 24 unidades."
+    },
+    {
+      "producto_id": "prod_014",
+      "producto_nombre": "Atún Florida 170g",
+      "prioridad": "ALTA",
+      "color_alerta": "rojo",
+      "motivo": "Hay riesgo de quedarse sin stock debido a: fin de semana.",
+      "sugerencia": "Se recomienda realizar un pedido de 36 unidades."
+    },
+    {
+      "producto_id": "prod_015",
+      "producto_nombre": "Detergente Ariel 500g",
+      "prioridad": "ALTA",
+      "color_alerta": "rojo",
+      "motivo": "Hay riesgo de quedarse sin stock debido a: fin de semana.",
+      "sugerencia": "Se recomienda realizar un pedido de 12 unidades."
+    }
+  ],
+  "alertas_vencimiento": [
+    {
+      "producto_id": "prod_010",
+      "producto_nombre": "Pan de Molde Bimbo 500g",
+      "color_alerta": "rojo",
+      "dias_para_vencer": 7,
+      "cantidad_en_riesgo": 63,
+      "accion_sugerida": "Aplicar promoción. Vender a S/. 4.55 para liquidar stock."
+    }
+  ]
+}

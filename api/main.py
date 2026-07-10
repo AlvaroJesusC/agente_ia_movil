@@ -9,6 +9,7 @@ que devuelven directamente imágenes PNG (media_type="image/png") para su consum
 import sys
 import os
 import io
+from datetime import datetime, timedelta
 import pandas as pd
 import numpy as np
 
@@ -23,6 +24,7 @@ if ROOT_DIR not in sys.path:
     sys.path.insert(0, ROOT_DIR)
 
 from fastapi import FastAPI, Query, Response, HTTPException
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
@@ -89,10 +91,12 @@ def inicializar_sistema():
     observaciones_bn = red_bayesiana.preparar_datos_entrenamiento(df_ventas, df_inventario)
     red_bayesiana.aprender_parametros(observaciones_bn)
 
-    # Evaluación inicial de alertas
+    # Evaluación inicial de alertas (solo para el estado de inventario más reciente)
     actuador_opt = actuador.ActuadorOptimizado()
     alertas = []
-    for _, fila in df_inventario.iterrows():
+    ultima_fecha_inv = df_inventario["fecha"].max()
+    df_inventario_actual = df_inventario[df_inventario["fecha"] == ultima_fecha_inv]
+    for _, fila in df_inventario_actual.iterrows():
         prod_id = fila["producto_id"]
         pred_prod = predicciones[prod_id]
         patron_prod = patrones_horarios[prod_id]
@@ -165,7 +169,7 @@ def endpoint_predecir(producto_id: str = Query(None, description="ID del product
         fila_inv = df_inv[df_inv["producto_id"] == producto_id]
         if fila_inv.empty:
             raise HTTPException(status_code=404, detail="Producto no encontrado")
-        fila_inv = fila_inv.iloc[0]
+        fila_inv = fila_inv.sort_values("fecha").iloc[-1]
         nombre_prod = fila_inv["producto_nombre"]
         stock_fisico = fila_inv["stock_fisico"]
         stock_transito = fila_inv["stock_transito"]
@@ -214,7 +218,7 @@ def endpoint_restock(producto_id: str = Query(None, description="ID del producto
     if producto_id:
         df_prod = df_inv[df_inv["producto_id"] == producto_id]
         if not df_prod.empty:
-            fila = df_prod.iloc[0]
+            fila = df_prod.sort_values("fecha").iloc[-1]
             nombre = fila["producto_nombre"]
             stock_fis = fila["stock_fisico"]
             stock_tra = fila["stock_transito"]
@@ -336,7 +340,7 @@ def endpoint_poda_alfa_beta(
         prods_eval.insert(0, producto_id)
 
     for p_id in prods_eval:
-        fila = df_inv[df_inv["producto_id"] == p_id].iloc[0]
+        fila = df_inv[df_inv["producto_id"] == p_id].sort_values("fecha").iloc[-1]
         pred = preds[p_id]
         demanda_prom = pred["demanda_predicha"].mean()
 
@@ -433,6 +437,226 @@ def endpoint_sistema_experto():
         with open(file_path, "rb") as f:
             return Response(content=f.read(), media_type="image/png")
     raise HTTPException(status_code=500, detail="Error al generar gráfico de la red de inferencia del sistema experto")
+
+
+@app.get("/api/v1/dashboard/bodega", summary="Dashboard simplificado en JSON para el bodeguero")
+def endpoint_dashboard_bodega():
+    """
+    Retorna un JSON simplificado para consumo móvil con:
+    - Resumen de alertas del día (rojo, amarillo, verde, dinero en riesgo por vencimiento).
+    - Recomendaciones de compra estructuradas de forma sencilla.
+    - Alertas de vencimiento de productos perecederos (merma).
+    - Ventas agrupadas por categoría (porcentaje total y Top 3 productos).
+    - Pronóstico de ventas semanal dinámico basado en datetime.now().
+    """
+    df_ventas = STATE["df_ventas"]
+    df_inventario = STATE["df_inventario"]
+    predicciones = STATE["predicciones"]
+    alertas = STATE["alertas"]
+
+    if df_ventas is None or df_inventario is None or not predicciones:
+        raise HTTPException(status_code=503, detail="El sistema está inicializando sus datos. Por favor espere.")
+
+    # 1. Resumen de alertas y dinero en riesgo
+    alertas_rojas = 0
+    alertas_amarillas = 0
+    dinero_en_riesgo_vencimiento = 0.0
+
+    # Mapeo de productos a precios unitarios y costos utilizando el estado más reciente
+    df_inv_reciente = df_inventario.sort_values("fecha").drop_duplicates(subset=["producto_id"], keep="last")
+    precios_dict = df_inv_reciente.set_index("producto_id")["precio_unitario"].to_dict()
+    costo_dict = df_inv_reciente.set_index("producto_id")["costo_compra"].to_dict()
+
+    for al in alertas:
+        grav = al.get("gravedad", "BAJA")
+        tipo = al.get("tipo")
+        
+        if tipo in ["RIESGO_QUIEBRE", "RIESGO_VENCIMIENTO", "RIESGO_BAYESIANO"]:
+            if grav == "ALTA":
+                alertas_rojas += 1
+            elif grav == "MEDIA":
+                alertas_amarillas += 1
+        
+        if tipo == "RIESGO_VENCIMIENTO":
+            prod_id = al.get("producto_id")
+            merma_est = al.get("merma_estimada", 0)
+            pu = precios_dict.get(prod_id, 0.0)
+            costo_u = costo_dict.get(prod_id, pu * 0.7)
+            dinero_en_riesgo_vencimiento += float(merma_est * costo_u)
+
+    dinero_en_riesgo_vencimiento = round(dinero_en_riesgo_vencimiento, 2)
+
+    # 2. Recomendaciones de Compra
+    recomendaciones_compra = []
+    alertas_quiebre = [al for al in alertas if al.get("tipo") in ["RIESGO_QUIEBRE", "RIESGO_BAYESIANO"]]
+    prod_compra_añadidos = set()
+
+    for al in alertas_quiebre:
+        prod_id = al.get("producto_id")
+        if prod_id in prod_compra_añadidos:
+            continue
+        prod_compra_añadidos.add(prod_id)
+        
+        nombre = al.get("producto_nombre", "Producto")
+        grav = al.get("gravedad", "MEDIA")
+        color_alerta = "rojo" if grav == "ALTA" else "amarillo"
+        cant = al.get("cantidad_pedido", 0)
+        if cant == 0:
+            min_ped_dict = df_inventario.drop_duplicates(subset=["producto_id"]).set_index("producto_id")["cantidad_minima_pedido"].to_dict()
+            cant = int(min_ped_dict.get(prod_id, 12))
+            
+        motivo = al.get("descripcion", "Stock bajo para cubrir la demanda estimada.")
+        if "lead time" in motivo.lower() or "stock de seguridad" in motivo.lower():
+            motivo = "El stock actual es insuficiente para cubrir las ventas de los próximos días."
+        elif "red bayesiana" in motivo.lower():
+            partes = motivo.split("causas activas:")
+            if len(partes) > 1:
+                causas = partes[1].strip().rstrip(".")
+                # Reemplazar comas y nombres técnicos por un lenguaje más simple
+                causas_limpias = causas.replace("es fin semana", "fin de semana").replace("demanda alta", "demanda muy alta").replace("retraso proveedor", "demora del proveedor")
+                motivo = f"Hay riesgo de quedarse sin stock debido a: {causas_limpias}."
+            else:
+                motivo = "Existe riesgo de quedarse sin stock por condiciones de alta demanda o feriados."
+        
+        sugerencia = f"Se recomienda realizar un pedido de {cant} unidades."
+        
+        recomendaciones_compra.append({
+          "producto_id": prod_id,
+          "producto_nombre": nombre,
+          "prioridad": grav,
+          "color_alerta": color_alerta,
+          "motivo": motivo,
+          "sugerencia": sugerencia
+        })
+
+    if not recomendaciones_compra:
+        recomendaciones_compra.append({
+          "producto_id": "none",
+          "producto_nombre": "Todos los productos",
+          "prioridad": "BAJA",
+          "color_alerta": "verde",
+          "motivo": "Todos los niveles de inventario están en rango seguro para los próximos días.",
+          "sugerencia": "No se requieren compras de emergencia."
+        })
+
+    # 3. Alertas de Vencimiento
+    alertas_vencimiento = []
+    alertas_vence = [al for al in alertas if al.get("tipo") == "RIESGO_VENCIMIENTO"]
+    for al in alertas_vence:
+        prod_id = al.get("producto_id")
+        nombre = al.get("producto_nombre", "Producto")
+        grav = al.get("gravedad", "MEDIA")
+        color_alerta = "rojo" if grav == "ALTA" else "amarillo"
+        merma_est = al.get("merma_estimada", 0)
+        precio_oferta = al.get("precio_oferta", 0.0)
+        
+        fila_prod = df_inventario[df_inventario["producto_id"] == prod_id]
+        vida_util = int(fila_prod.sort_values("fecha").iloc[-1].get("vida_util_dias", 5)) if not fila_prod.empty else 5
+
+        alertas_vencimiento.append({
+          "producto_id": prod_id,
+          "producto_nombre": nombre,
+          "color_alerta": color_alerta,
+          "dias_para_vencer": max(1, vida_util),
+          "cantidad_en_riesgo": int(merma_est),
+          "accion_sugerida": f"Aplicar promoción. Vender a S/. {precio_oferta:.2f} para liquidar stock."
+        })
+
+    # 4. Ventas por Categoría (Top Productos)
+    df_ventas_temp = df_ventas.copy()
+    df_ventas_temp["monto_venta"] = df_ventas_temp["cantidad_vendida"] * df_ventas_temp["precio_aplicado"]
+    
+    ventas_categoria = df_ventas_temp.groupby("categoria")["monto_venta"].sum()
+    total_ventas_general = ventas_categoria.sum()
+    
+    categorias_mas_vendidas = []
+    colores_categoria = {
+        "Abarrotes": "#1A5276",
+        "Bebidas": "#2E86C1",
+        "Lácteos": "#28B463",
+        "Limpieza": "#E67E22",
+        "Snacks": "#9B59B6",
+        "Cuidado Personal": "#1ABC9C"
+    }
+    
+    for cat_nombre, monto_cat in ventas_categoria.items():
+        porcentaje = round((monto_cat / total_ventas_general) * 100, 1) if total_ventas_general > 0 else 0.0
+        
+        df_cat = df_ventas_temp[df_ventas_temp["categoria"] == cat_nombre]
+        prod_ventas = df_cat.groupby("producto_nombre")["cantidad_vendida"].sum().reset_index()
+        prod_ventas_sorted = prod_ventas.sort_values(by="cantidad_vendida", ascending=False).head(3)
+        
+        top_productos = []
+        for puesto, fila_p in enumerate(prod_ventas_sorted.itertuples(index=False), 1):
+            top_productos.append({
+                "puesto": puesto,
+                "nombre": fila_p.producto_nombre,
+                "ventas_estimadas_mes": int(fila_p.cantidad_vendida / 3)
+            })
+            
+        color_cat = colores_categoria.get(cat_nombre, "#7F8C8D")
+        
+        categorias_mas_vendidas.append({
+            "categoria": cat_nombre,
+            "porcentaje_total": porcentaje,
+            "color_hex": color_cat,
+            "top_productos": top_productos
+        })
+        
+    categorias_mas_vendidas = sorted(categorias_mas_vendidas, key=lambda x: x["porcentaje_total"], reverse=True)
+
+    # 5. Pronóstico de Ventas Semanal Dinámico (datetime.now() como fecha_inicio)
+    fecha_inicio = datetime.now().date()
+    fechas_rango = [fecha_inicio + timedelta(days=i) for i in range(7)]
+    
+    eje_x_dias = []
+    eje_y_valores = []
+    
+    dias_semana_esp = {
+        0: "Lun", 1: "Mar", 2: "Mie", 3: "Jue", 4: "Vie", 5: "Sab", 6: "Dom"
+    }
+    
+    for f in fechas_rango:
+        dia_semana_num = f.weekday()
+        dia_semana_lbl = dias_semana_esp[dia_semana_num]
+        eje_x_dias.append(dia_semana_lbl)
+        
+        demanda_total_dia = 0.0
+        for prod_id, df_pred in predicciones.items():
+            if df_pred is not None and not df_pred.empty:
+                fila_pred = df_pred[df_pred["fecha"].dt.date == f]
+                if not fila_pred.empty:
+                    demanda_total_dia += float(fila_pred["demanda_predicha"].values[0])
+                    
+        if demanda_total_dia == 0.0:
+            df_ventas_dia = df_ventas[df_ventas["fecha_hora"].dt.weekday == dia_semana_num]
+            if not df_ventas_dia.empty:
+                total_v = df_ventas_dia["cantidad_vendida"].sum()
+                num_semanas = len(df_ventas_dia["fecha_hora"].dt.date.unique()) / 7
+                demanda_total_dia = float(total_v / max(1, num_semanas))
+            else:
+                demanda_total_dia = 150.0
+                
+        eje_y_valores.append(round(demanda_total_dia, 1))
+        
+    grafico_ventas_semanal = {
+        "titulo": "Demanda Total Esperada para esta Semana",
+        "eje_x_dias": eje_x_dias,
+        "eje_y_valores": eje_y_valores,
+        "nota_inteligente": f"El día de mayores ventas pronosticado es el {eje_x_dias[eje_y_valores.index(max(eje_y_valores))]}."
+    }
+
+    return JSONResponse(content={
+        "resumen_hoy": {
+            "alertas_rojas": alertas_rojas,
+            "alertas_amarillas": alertas_amarillas,
+            "dinero_en_riesgo_vencimiento": dinero_en_riesgo_vencimiento
+        },
+        "recomendaciones_compra": recomendaciones_compra,
+        "alertas_vencimiento": alertas_vencimiento,
+        "categorias_mas_vendidas": categorias_mas_vendidas,
+        "grafico_ventas_semanal": grafico_ventas_semanal
+    })
 
 
 
