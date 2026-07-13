@@ -1620,125 +1620,159 @@ def graficar_grafo_sistema_experto(directorio="reportes"):
     subcarpeta_se = os.path.join(directorio, "06_sistema_experto")
     os.makedirs(subcarpeta_se, exist_ok=True)
 
-    fig, ax = plt.subplots(figsize=(11, 6.5))
+    fig, ax = plt.subplots(figsize=(14, 7))
+    fig.patch.set_facecolor("#FFFFFF")
     ax.axis("off")
 
-    # Posiciones fijas de los nodos (X, Y) para un diseño limpio sin solapamientos
+    # Posiciones fijas de los nodos (X, Y) para un diseño de flujo completamente lineal (5 columnas)
     posiciones = {
         # Hechos Iniciales (X=1)
-        "recurso_criticamente_bajo": (1.0, 5.5),
-        "tiempo_reposicion_inminente": (1.0, 4.5),
-        "es_perecedero": (1.0, 2.5),
-        "stock_excedente_critico": (1.0, 1.5),
-        "vencimiento_muy_cercano": (1.0, 0.5),
+        "recurso_criticamente_bajo": (1.0, 5.0),
+        "tiempo_reposicion_inminente": (1.0, 3.8),
+        "es_perecedero": (1.0, 2.2),
+        "stock_excedente_critico": (1.0, 1.1),
+        "vencimiento_muy_cercano": (1.0, 0.0),
 
-        # Reglas Lógicas (X=3)
-        "R1_RIESGO_QUIEBRE_CRITICO": (3.0, 5.0),
-        "R3_ORDEN_EMERGENCIA": (3.0, 3.5),
-        "R5_RIESGO_VENCIMIENTO_CRITICO": (3.0, 1.5),
-        "R7_PROMO_VENTA_RAPIDA_30": (3.0, 0.0),
+        # Reglas del Ciclo 1 (X=2)
+        "R1_RIESGO_QUIEBRE_CRITICO": (2.0, 4.4),
+        "R5_RIESGO_VENCIMIENTO_CRITICO": (2.0, 1.1),
 
-        # Consecuentes / Alertas Inferidas (X=5)
-        "RIESGO_QUIEBRE_CRITICO": (5.0, 5.0),
-        "ACCION_ORDEN_EMERGENCIA": (5.0, 3.5),
-        "RIESGO_VENCIMIENTO_CRITICO": (5.0, 1.5),
-        "ACCION_PROMO_DESCUENTO_30": (5.0, 0.0)
+        # Hechos Inferidos Ciclo 1 (X=3)
+        "RIESGO_QUIEBRE_CRITICO": (3.0, 4.4),
+        "RIESGO_VENCIMIENTO_CRITICO": (3.0, 1.1),
+
+        # Reglas del Ciclo 2 (X=4)
+        "R3_ORDEN_EMERGENCIA": (4.0, 4.4),
+        "R7_PROMO_VENTA_RAPIDA_30": (4.0, 1.1),
+
+        # Inferencias / Acciones Finales (X=5)
+        "ACCION_ORDEN_EMERGENCIA": (5.0, 4.4),
+        "ACCION_PROMO_DESCUENTO_30": (5.0, 1.1)
     }
 
-    # Conexiones (Flechas de inferencia)
+    # Conexiones (Flechas de inferencia que fluyen linealmente de izquierda a derecha)
     conexiones = [
-        # Inferencia de Quiebre Crítico
+        # Inferencia de Quiebre Crítico (Ciclo 1)
         ("recurso_criticamente_bajo", "R1_RIESGO_QUIEBRE_CRITICO"),
         ("tiempo_reposicion_inminente", "R1_RIESGO_QUIEBRE_CRITICO"),
         ("R1_RIESGO_QUIEBRE_CRITICO", "RIESGO_QUIEBRE_CRITICO"),
         
-        # Encadenamiento hacia Adelante (Pasada 2)
+        # Encadenamiento hacia Adelante (Ciclo 2)
         ("RIESGO_QUIEBRE_CRITICO", "R3_ORDEN_EMERGENCIA"),
         ("R3_ORDEN_EMERGENCIA", "ACCION_ORDEN_EMERGENCIA"),
 
-        # Inferencia de Vencimiento Crítico
+        # Inferencia de Vencimiento Crítico (Ciclo 1)
         ("es_perecedero", "R5_RIESGO_VENCIMIENTO_CRITICO"),
         ("stock_excedente_critico", "R5_RIESGO_VENCIMIENTO_CRITICO"),
         ("vencimiento_muy_cercano", "R5_RIESGO_VENCIMIENTO_CRITICO"),
         ("R5_RIESGO_VENCIMIENTO_CRITICO", "RIESGO_VENCIMIENTO_CRITICO"),
 
-        # Encadenamiento hacia Adelante (Pasada 2)
+        # Encadenamiento hacia Adelante (Ciclo 2)
         ("RIESGO_VENCIMIENTO_CRITICO", "R7_PROMO_VENTA_RAPIDA_30"),
         ("R7_PROMO_VENTA_RAPIDA_30", "ACCION_PROMO_DESCUENTO_30")
     ]
 
     # Colores temáticos
-    color_hecho = "#EBF5FB"       # Azul claro
-    color_regla = "#FEF9E7"       # Amarillo claro
-    color_consecuente = "#FDEDEC"  # Rojo/Naranja claro
+    color_hecho = "#EBF5FB"              # Azul claro
+    color_hecho_inf = "#E8F8F5"          # Menta claro para hechos inferidos
+    color_regla = "#FEF9E7"              # Amarillo claro
+    color_consecuente = "#FDEDEC"        # Rojo/Naranja claro
     
     border_hecho = "#2980B9"
+    border_hecho_inf = "#117A65"
     border_regla = "#F39C12"
     border_consecuente = "#C0392B"
 
-    # Dibujar conexiones (flechas)
+    # Dibujar conexiones (flechas optimizadas para no solapar los bordes)
     for origen, destino in conexiones:
         x1, y1 = posiciones[origen]
         x2, y2 = posiciones[destino]
         
-        # Ajuste de bordes para que las flechas no toquen el centro de los textos
         dx = x2 - x1
         dy = y2 - y1
         l = np.sqrt(dx**2 + dy**2)
         
-        x1_adj = x1 + (0.5 * dx / l)
-        y1_adj = y1 + (0.15 * dy / l)
-        x2_adj = x2 - (0.55 * dx / l)
-        y2_adj = y2 - (0.15 * dy / l)
+        # Definir tamaño aproximado de las cajas de texto según tipo para calcular bordes exactos
+        w1 = 0.32 if (origen.startswith("R") or len(origen) > 20) else 0.26
+        w2 = 0.32 if (destino.startswith("R") or len(destino) > 20) else 0.26
+        h1 = 0.12 if "\n" in origen else 0.08
+        h2 = 0.12 if "\n" in destino else 0.08
+        
+        angle = np.arctan2(dy, dx)
+        cos_a = np.cos(angle)
+        sin_a = np.sin(angle)
+        
+        # Intersección para origen
+        t_x = w1 / abs(cos_a) if cos_a != 0 else np.inf
+        t_y = h1 / abs(sin_a) if sin_a != 0 else np.inf
+        t1 = min(t_x, t_y)
+        x1_adj = x1 + t1 * cos_a
+        y1_adj = y1 + t1 * sin_a
+        
+        # Intersección para destino
+        t_x2 = w2 / abs(cos_a) if cos_a != 0 else np.inf
+        t_y2 = h2 / abs(sin_a) if sin_a != 0 else np.inf
+        t2 = min(t_x2, t_y2)
+        x2_adj = x2 - t2 * cos_a
+        y2_adj = y2 - t2 * sin_a
         
         ax.annotate("", xy=(x2_adj, y2_adj), xytext=(x1_adj, y1_adj),
                     arrowprops=dict(arrowstyle="-|>", color="#7F8C8D", lw=1.5, mutation_scale=12))
 
     # Dibujar nodos de texto
     for nodo, (x, y) in posiciones.items():
-        # Clasificar el nodo
         if nodo.startswith("R") and "_" in nodo:
             # Regla
             lbl = nodo
             color_bg = color_regla
             color_edge = border_regla
-            fs = 8.5
+            fs = 8.0
             style = "italic"
-        elif nodo.startswith("ACCION_") or nodo.startswith("RIESGO_"):
-            # Consecuente
+        elif nodo.startswith("ACCION_"):
+            # Consecuente final
             lbl = nodo.replace("_", "\n")
             color_bg = color_consecuente
             color_edge = border_consecuente
-            fs = 8.5
+            fs = 8.0
+            style = "normal"
+        elif nodo in ["RIESGO_QUIEBRE_CRITICO", "RIESGO_VENCIMIENTO_CRITICO"]:
+            # Hecho inferido intermedio (Ciclo 1)
+            lbl = nodo.replace("_", "\n")
+            color_bg = color_hecho_inf
+            color_edge = border_hecho_inf
+            fs = 8.0
             style = "normal"
         else:
-            # Hecho
+            # Hecho inicial
             lbl = nodo.replace("_", "\n")
             color_bg = color_hecho
             color_edge = border_hecho
-            fs = 8.5
+            fs = 8.0
             style = "normal"
 
         bbox_props = dict(boxstyle="round,pad=0.5", facecolor=color_bg, edgecolor=color_edge, linewidth=1.5)
         ax.text(x, y, lbl, ha="center", va="center", fontsize=fs, fontweight="bold", color="#2C3E50", bbox=bbox_props, style=style)
 
     # Añadir títulos de columnas
-    ax.text(1.0, 6.2, "BASE DE HECHOS\n(Entradas del Agente)", ha="center", va="bottom", fontsize=10.5, fontweight="bold", color=border_hecho)
-    ax.text(3.0, 6.2, "BASE DE REGLAS\n(Base de Conocimientos)", ha="center", va="bottom", fontsize=10.5, fontweight="bold", color=border_regla)
-    ax.text(5.0, 6.2, "INFERENCIAS FINALES\n(Forward Chaining)", ha="center", va="bottom", fontsize=10.5, fontweight="bold", color=border_consecuente)
+    ax.text(1.0, 5.7, "BASE DE HECHOS\n(Hechos Iniciales)", ha="center", va="bottom", fontsize=9.5, fontweight="bold", color=border_hecho)
+    ax.text(2.0, 5.7, "REGLAS LOGÍSTICAS\n(Ciclo 1)", ha="center", va="bottom", fontsize=9.5, fontweight="bold", color=border_regla)
+    ax.text(3.0, 5.7, "HECHOS INFERIDOS\n(Ciclo 1)", ha="center", va="bottom", fontsize=9.5, fontweight="bold", color=border_hecho_inf)
+    ax.text(4.0, 5.7, "REGLAS DE ACCIÓN\n(Ciclo 2)", ha="center", va="bottom", fontsize=9.5, fontweight="bold", color=border_regla)
+    ax.text(5.0, 5.7, "INFERENCIAS FINALES\n(Acciones Sugeridas)", ha="center", va="bottom", fontsize=9.5, fontweight="bold", color=border_consecuente)
 
-    ax.set_ylim(-0.5, 6.7)
-    ax.set_xlim(0.2, 5.8)
+    ax.set_ylim(-0.6, 6.3)
+    ax.set_xlim(0.4, 5.6)
 
-    plt.title("Sistema Experto de Gestión de Inventarios (Grafo de Reglas e Inferencia)", 
+    plt.title("Sistema Experto de Gestión de Inventarios (Flujo de Reglas e Inferencia Lineal)", 
               fontsize=14, fontweight="bold", color=COLOR_PRIMARIO, pad=15)
     
     # Leyenda explicativa en la parte inferior
     explicacion_se = (
-        "Mecanismo de Inferencia por Encadenamiento hacia Adelante (Forward Chaining):\n"
-        "1. Ciclo 1: El motor lee los hechos en memoria y dispara las reglas R1 y R5, infiriendo [RIESGO_QUIEBRE_CRITICO] y [RIESGO_VENCIMIENTO_CRITICO].\n"
-        "2. Ciclo 2: Los nuevos hechos ingresan a la memoria y satisfacen los antecedentes de las reglas de acción R3 y R7.\n"
-        "3. Inferencia Final: El motor deduce [ACCION_ORDEN_EMERGENCIA] y [ACCION_PROMO_DESCUENTO_30] como medidas correctivas recomendadas."
+        "Mecanismo de Inferencia por Encadenamiento hacia Adelante (Forward Chaining) en Flujo Lineal:\n"
+        "1. Hechos Iniciales: El motor detecta hechos de entrada en la memoria de trabajo.\n"
+        "2. Ciclo 1 (Inferencia Temprana): Se disparan las reglas logísticas R1 y R5, deduciendo los HECHOS INFERIDOS [RIESGO_QUIEBRE_CRITICO] y [RIESGO_VENCIMIENTO_CRITICO].\n"
+        "3. Ciclo 2 (Inferencia de Acción): Los hechos inferidos vuelven a evaluar las Reglas de Acción R3 y R7, disparándolas.\n"
+        "4. Inferencias Finales: Se deducen [ACCION_ORDEN_EMERGENCIA] and [ACCION_PROMO_DESCUENTO_30] como recomendaciones operativas."
     )
     fig.text(0.5, 0.02, explicacion_se, ha="center", va="bottom", fontsize=9, color="#1C2833",
              bbox=dict(boxstyle="round,pad=0.6", facecolor="#F8F9F9", edgecolor="#BDC3C7", alpha=0.9))
