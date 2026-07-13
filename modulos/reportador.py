@@ -1750,3 +1750,176 @@ def graficar_grafo_sistema_experto(directorio="reportes"):
     plt.close(fig)
 
 
+def graficar_sistema_difuso(resultados_difusos, controlador, directorio="reportes"):
+    """
+    Genera y guarda los gráficos del Sistema Difuso en la subcarpeta 07_sistema_difuso.
+    """
+    import os
+    from mpl_toolkits.mplot3d import Axes3D
+    
+    subcarpeta_difuso = os.path.join(directorio, "07_sistema_difuso")
+    os.makedirs(subcarpeta_difuso, exist_ok=True)
+        
+    # --- Gráfico 1: Funciones de Membresía ---
+    fig1, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(12, 8))
+    
+    # Funciones locales para graficar sin importar sistema_difuso circularmente
+    def tri_val(x, a, b, c):
+        if x <= a or x >= c: return 0.0
+        elif a < x < b: return (x - a) / (b - a)
+        elif x == b: return 1.0
+        else: return (c - x) / (c - b)
+
+    def trap_val(x, a, b, c, d):
+        if x <= a or x >= d: return 0.0
+        elif a < x < b: return (x - a) / (b - a)
+        elif b <= x <= c: return 1.0
+        else: return (d - x) / (d - c)
+
+    # Stock Ratio
+    x_stock = np.linspace(0, 200, 200)
+    y_bajo = [trap_val(x, 0.0, 0.0, 30.0, 60.0) for x in x_stock]
+    y_medio = [tri_val(x, 40.0, 60.0, 90.0) for x in x_stock]
+    y_alto = [trap_val(x, 75.0, 100.0, 200.0, 200.0) for x in x_stock]
+    ax1.plot(x_stock, y_bajo, label="Bajo", color=COLOR_ALERTA_ALTA, linewidth=2)
+    ax1.plot(x_stock, y_medio, label="Medio", color=COLOR_ALERTA_MEDIA, linewidth=2)
+    ax1.plot(x_stock, y_alto, label="Alto", color=COLOR_EXITO, linewidth=2)
+    ax1.set_title("Membresía: Relación Stock-Demanda (%)", fontsize=11, fontweight="bold", color=COLOR_PRIMARIO)
+    ax1.set_xlabel("Stock / Demanda Estimada (%)")
+    ax1.set_ylabel("Membresía")
+    ax1.grid(True, linestyle="--", alpha=0.5)
+    ax1.legend()
+    
+    # Días Vencimiento
+    x_vence = np.linspace(0, 30, 200)
+    y_crit = [trap_val(x, 0.0, 0.0, 3.0, 7.0) for x in x_vence]
+    y_cerc = [tri_val(x, 5.0, 10.0, 15.0) for x in x_vence]
+    y_segu = [trap_val(x, 12.0, 20.0, 30.0, 30.0) for x in x_vence]
+    ax2.plot(x_vence, y_crit, label="Crítico", color=COLOR_ALERTA_ALTA, linewidth=2)
+    ax2.plot(x_vence, y_cerc, label="Cercano", color=COLOR_ALERTA_MEDIA, linewidth=2)
+    ax2.plot(x_vence, y_segu, label="Seguro", color=COLOR_EXITO, linewidth=2)
+    ax2.set_title("Membresía: Días para Vencer", fontsize=11, fontweight="bold", color=COLOR_PRIMARIO)
+    ax2.set_xlabel("Días Restantes")
+    ax2.set_ylabel("Membresía")
+    ax2.grid(True, linestyle="--", alpha=0.5)
+    ax2.legend()
+    
+    # Urgencia Pedido
+    x_urg = np.linspace(0, 100, 200)
+    y_u_nul = [trap_val(x, 0.0, 0.0, 20.0, 45.0) for x in x_urg]
+    y_u_mod = [tri_val(x, 30.0, 50.0, 75.0) for x in x_urg]
+    y_u_cri = [trap_val(x, 60.0, 80.0, 100.0, 100.0) for x in x_urg]
+    ax3.plot(x_urg, y_u_nul, label="Nula", color=COLOR_EXITO, linewidth=2)
+    ax3.plot(x_urg, y_u_mod, label="Moderada", color=COLOR_ALERTA_MEDIA, linewidth=2)
+    ax3.plot(x_urg, y_u_cri, label="Crítica", color=COLOR_ALERTA_ALTA, linewidth=2)
+    ax3.set_title("Membresía Salida: Urgencia de Pedido (%)", fontsize=11, fontweight="bold", color=COLOR_PRIMARIO)
+    ax3.set_xlabel("Urgencia (%)")
+    ax3.set_ylabel("Membresía")
+    ax3.grid(True, linestyle="--", alpha=0.5)
+    ax3.legend()
+    
+    # Descuento Sugerido
+    x_desc = np.linspace(0, 50, 200)
+    y_d_nin = [trap_val(x, 0.0, 0.0, 5.0, 10.0) for x in x_desc]
+    y_d_mod = [tri_val(x, 5.0, 15.0, 25.0) for x in x_desc]
+    y_d_agr = [trap_val(x, 20.0, 35.0, 50.0, 50.0) for x in x_desc]
+    ax4.plot(x_desc, y_d_nin, label="Ninguno", color=COLOR_EXITO, linewidth=2)
+    ax4.plot(x_desc, y_d_mod, label="Moderado", color=COLOR_ALERTA_MEDIA, linewidth=2)
+    ax4.plot(x_desc, y_d_agr, label="Agresivo", color=COLOR_ALERTA_ALTA, linewidth=2)
+    ax4.set_title("Membresía Salida: Descuento Sugerido (%)", fontsize=11, fontweight="bold", color=COLOR_PRIMARIO)
+    ax4.set_xlabel("Descuento (%)")
+    ax4.set_ylabel("Membresía")
+    ax4.grid(True, linestyle="--", alpha=0.5)
+    ax4.legend()
+    
+    plt.suptitle("Funciones de Pertenencia del Sistema Difuso", fontsize=14, fontweight="bold", color=COLOR_PRIMARIO)
+    plt.tight_layout(rect=[0, 0.02, 1, 0.95])
+    
+    fig1.savefig(os.path.join(subcarpeta_difuso, "pertenencia_variables.png"), dpi=150, bbox_inches="tight")
+    plt.close(fig1)
+    
+    # --- Gráfico 2: Superficie de Control ---
+    fig2 = plt.figure(figsize=(12, 5))
+    
+    # Subplot 2.1: Stock Ratio vs Urgencia (2D)
+    ax21 = fig2.add_subplot(121)
+    x_test_stock = np.linspace(0, 150, 80)
+    y_test_urg = []
+    for s in x_test_stock:
+        res = controlador.evaluar_producto(s, 100.0, dias_vencimiento=999, es_perecedero=False)
+        y_test_urg.append(res["urgencia_pedido_pct"])
+    ax21.plot(x_test_stock, y_test_urg, color=COLOR_SECUNDARIO, linewidth=3.0)
+    ax21.set_title("Curva de Control: Stock Ratio vs Urgencia Pedido", fontsize=11, fontweight="bold", color=COLOR_PRIMARIO)
+    ax21.set_xlabel("Stock Ratio (%)")
+    ax21.set_ylabel("Urgencia de Pedido Inferred (%)")
+    ax21.grid(True, linestyle="--", alpha=0.5)
+    
+    # Subplot 2.2: Stock Ratio y Días Vencimiento vs Descuento (3D)
+    ax22 = fig2.add_subplot(122, projection='3d')
+    X_stock, Y_vence = np.meshgrid(np.linspace(50, 150, 20), np.linspace(0, 20, 20))
+    Z_desc = np.zeros_like(X_stock)
+    for idx_i in range(X_stock.shape[0]):
+        for idx_j in range(X_stock.shape[1]):
+            res = controlador.evaluar_producto(
+                stock_actual=X_stock[idx_i, idx_j], 
+                demanda_estimada=100.0, 
+                dias_vencimiento=Y_vence[idx_i, idx_j], 
+                es_perecedero=True
+            )
+            Z_desc[idx_i, idx_j] = res["descuento_sugerido_pct"]
+            
+    surf = ax22.plot_surface(X_stock, Y_vence, Z_desc, cmap='viridis', edgecolor='none', alpha=0.8)
+    ax22.set_title("Superficie de Control: Descuento Sugerido (Perecederos)", fontsize=11, fontweight="bold", color=COLOR_PRIMARIO)
+    ax22.set_xlabel("Stock Ratio (%)", fontsize=8)
+    ax22.set_ylabel("Días Vencimiento", fontsize=8)
+    ax22.set_zlabel("Descuento (%)", fontsize=8)
+    ax22.view_init(elev=25, azim=-120)
+    fig2.colorbar(surf, ax=ax22, shrink=0.5, aspect=10, pad=0.1)
+    
+    plt.suptitle("Superficie de Control y Curvas del Sistema Difuso", fontsize=13, fontweight="bold", color=COLOR_PRIMARIO)
+    plt.tight_layout()
+    
+    fig2.savefig(os.path.join(subcarpeta_difuso, "superficie_decision.png"), dpi=150, bbox_inches="tight")
+    plt.close(fig2)
+
+    # --- Gráfico 3: Resultados de la Bodega ---
+    fig3, ax = plt.subplots(figsize=(12, 6))
+    
+    nombres = [r["producto_nombre"] for r in resultados_difusos]
+    urgencias = [r["urgencia_pedido_pct"] for r in resultados_difusos]
+    descuentos = [r["descuento_sugerido_pct"] for r in resultados_difusos]
+    
+    x = np.arange(len(nombres))
+    ancho = 0.35
+    
+    rects1 = ax.bar(x - ancho/2, urgencias, ancho, label='Urgencia de Reabastecimiento (%)', color=COLOR_SECUNDARIO)
+    rects2 = ax.bar(x + ancho/2, descuentos, ancho, label='Descuento de Liquidación Sugerido (%)', color=COLOR_ALERTA_MEDIA)
+    
+    ax.set_ylabel('Porcentaje (%)', fontsize=11, fontweight="bold", color=COLOR_PRIMARIO)
+    ax.set_title('Inferencia Difusa de Reabastecimiento y Descuento por Producto', fontsize=13, fontweight="bold", color=COLOR_PRIMARIO)
+    ax.set_xticks(x)
+    ax.set_xticklabels(nombres, rotation=45, ha="right", fontsize=9)
+    ax.legend(loc="upper right")
+    ax.grid(axis='y', linestyle='--', alpha=0.5)
+    
+    # Añadir valores arriba de las barras
+    def autolabel(rects):
+        for rect in rects:
+            height = rect.get_height()
+            if height > 0.0:
+                ax.annotate(f'{height:.1f}%',
+                            xy=(rect.get_x() + rect.get_width() / 2, height),
+                            xytext=(0, 3),  # 3 points vertical offset
+                            textcoords="offset points",
+                            ha='center', va='bottom', fontsize=8, fontweight="bold")
+                            
+    autolabel(rects1)
+    autolabel(rects2)
+    
+    plt.tight_layout()
+    
+    fig3.savefig(os.path.join(subcarpeta_difuso, "resultados_difusos_barras.png"), dpi=150, bbox_inches="tight")
+    plt.close(fig3)
+
+
+

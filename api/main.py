@@ -30,6 +30,7 @@ from contextlib import asynccontextmanager
 
 from modulos import sensor, cerebro, actuador, busqueda, reportador
 from modulos.poda_alfa_beta import EvaluadorPodaAlfaBeta, EstadoInventario, AccionAgente, EscenarioEntorno
+from modulos.sistema_difuso import ControladorDifuso
 
 # Globales para mantener datos y modelos cargados en memoria
 STATE = {
@@ -42,7 +43,9 @@ STATE = {
     "predicciones": {},
     "patrones_horarios": {},
     "alertas": [],
-    "actuador_opt": None
+    "actuador_opt": None,
+    "controlador_difuso": None,
+    "resultados_difusos": []
 }
 
 def inicializar_sistema():
@@ -109,6 +112,26 @@ def inicializar_sistema():
         al_prod = actuador_opt.evaluar_producto(fila, pred_prod_hoy, patron_prod, [], red_bayesiana=red_bayesiana)
         alertas.extend(al_prod)
 
+    # Inicialización y ejecución del Sistema Difuso para hoy
+    print("[API] Ejecutando Sistema Difuso para inventario actual...")
+    controlador_difuso = ControladorDifuso()
+    resultados_difusos = []
+    for _, fila in df_inventario_actual.iterrows():
+        prod_id = fila["producto_id"]
+        pred_prod = predicciones[prod_id]
+        pred_prod_hoy = pred_prod[pred_prod["fecha"] >= fecha_hoy].reset_index(drop=True)
+        demanda_estimada_7d = pred_prod_hoy.head(7)["demanda_predicha"].sum() if not pred_prod_hoy.empty else 30.0
+        
+        res_difuso = controlador_difuso.evaluar_producto(
+            stock_actual=fila["stock_fisico"],
+            demanda_estimada=demanda_estimada_7d,
+            dias_vencimiento=fila.get("vida_util_dias", 30) if fila["es_perecedero"] else 999,
+            es_perecedero=fila["es_perecedero"]
+        )
+        res_difuso["producto_id"] = prod_id
+        res_difuso["producto_nombre"] = fila["producto_nombre"]
+        resultados_difusos.append(res_difuso)
+
     STATE["df_ventas"] = df_ventas_full
     STATE["df_inventario"] = df_inventario_full
     STATE["ventas_diarias"] = ventas_diarias
@@ -119,6 +142,8 @@ def inicializar_sistema():
     STATE["patrones_horarios"] = patrones_horarios
     STATE["alertas"] = alertas
     STATE["actuador_opt"] = actuador_opt
+    STATE["controlador_difuso"] = controlador_difuso
+    STATE["resultados_difusos"] = resultados_difusos
     print("[API] Inicialización completada con éxito.")
 
 @asynccontextmanager
@@ -444,6 +469,33 @@ def endpoint_sistema_experto():
         with open(file_path, "rb") as f:
             return Response(content=f.read(), media_type="image/png")
     raise HTTPException(status_code=500, detail="Error al generar gráfico de la red de inferencia del sistema experto")
+
+
+@app.get("/sistema-difuso", summary="Gráfico PNG del Sistema Difuso de Decisión")
+def endpoint_sistema_difuso(
+    tipo: str = Query("resultados", description="Tipo de gráfico: 'pertenencia', 'superficie' o 'resultados'")
+):
+    """Devuelve la imagen PNG del gráfico del Sistema Difuso seleccionado."""
+    controlador = STATE["controlador_difuso"]
+    resultados = STATE["resultados_difusos"]
+    
+    if controlador is None or not resultados:
+        raise HTTPException(status_code=503, detail="El sistema está inicializando sus datos. Por favor espere.")
+        
+    # Regenerar gráficos actualizados
+    reportador.graficar_sistema_difuso(resultados, controlador, directorio="reportes")
+    
+    nombre_archivo = "resultados_difusos_barras.png"
+    if tipo == "pertenencia":
+        nombre_archivo = "pertenencia_variables.png"
+    elif tipo == "superficie":
+        nombre_archivo = "superficie_decision.png"
+        
+    file_path = os.path.join(ROOT_DIR, "reportes", "07_sistema_difuso", nombre_archivo)
+    if os.path.exists(file_path):
+        with open(file_path, "rb") as f:
+            return Response(content=f.read(), media_type="image/png")
+    raise HTTPException(status_code=500, detail="Error al generar gráfico del sistema difuso")
 
 
 @app.get("/api/v1/dashboard/horas-pico", summary="Datos JSON de Curvas de Demanda por Hora para Productos Clave")

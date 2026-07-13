@@ -23,6 +23,7 @@ if hasattr(sys.stdout, 'reconfigure'):
 # Módulos locales organizados en la carpeta modulos
 from modulos import sensor, cerebro, actuador, busqueda, reportador
 from modulos.poda_alfa_beta import EvaluadorPodaAlfaBeta, EstadoInventario
+from modulos.sistema_difuso import ControladorDifuso
 
 class Spinner:
     def __init__(self, message="Procesando..."):
@@ -626,6 +627,34 @@ def ejecutar_agente():
         print(f"   * Productos optimizados: {len(resultados_poda_alfa_beta)}")
         print(f"   * Eficiencia promedio de poda (α-β): {eficiencia_media:.1f}% de nodos podados")
 
+    # -------------------------------------------------------------
+    # FASE 7.5: EVALUACIÓN DEL SISTEMA DIFUSO
+    # -------------------------------------------------------------
+    spinner = Spinner("[CEREBRO] Ejecutando Sistema Difuso para Urgencia y Descuentos...")
+    spinner.start()
+    controlador_difuso = ControladorDifuso()
+    resultados_sistema_difuso = []
+
+    for _, fila in inventario_final_agosto.iterrows():
+        prod_id = fila["producto_id"]
+        prod_nombre = fila["producto_nombre"]
+        pred_fut = diccionario_predicciones_futuras[prod_id]
+        demanda_estimada_7d = pred_fut.head(7)["demanda_predicha"].sum() if len(pred_fut) > 0 else 30.0
+
+        res_difuso = controlador_difuso.evaluar_producto(
+            stock_actual=fila["stock_fisico"],
+            demanda_estimada=demanda_estimada_7d,
+            dias_vencimiento=fila["vida_util_dias"] if fila["es_perecedero"] else 999,
+            es_perecedero=fila["es_perecedero"]
+        )
+        res_difuso["producto_id"] = prod_id
+        res_difuso["producto_nombre"] = prod_nombre
+        resultados_sistema_difuso.append(res_difuso)
+
+    spinner.stop()
+    print("✔ [CEREBRO] Sistema Difuso ejecutado con éxito.")
+    print(f"   * Productos evaluados difusamente: {len(resultados_sistema_difuso)}")
+
     # reportes gráficos y escritos
     spinner = Spinner("[REPORTADOR] Generando reportes gráficos y escritos finales...")
     spinner.start()
@@ -646,6 +675,7 @@ def ejecutar_agente():
     reportador.graficar_arbol_categorias_bfs_dfs(busqueda_res)
     reportador.graficar_ruta_reabastecimiento_astar(astar_res)
     reportador.graficar_resultados_poda_alfa_beta(resultados_poda_alfa_beta)
+    reportador.graficar_sistema_difuso(resultados_sistema_difuso, controlador_difuso)
     
     # Generar árbol explicativo de la Poda Alfa-Beta para Inca Kola 500ml (usando la ejecución real)
     try:
@@ -672,6 +702,7 @@ def ejecutar_agente():
         busqueda_res=busqueda_res,
         astar_res=astar_res,
         resultados_poda=resultados_poda_alfa_beta,
+        resultados_difusos=resultados_sistema_difuso,
         agente_cerebro=agente_cerebro,
         agente_actuador=agente_actuador
     )
@@ -689,9 +720,10 @@ def ejecutar_agente():
     print("  📁 04_alertas_y_eventos/            (Dashboard, Impacto Feriados y Tablas)")
     print("  📁 05_poda_alfa_beta/               (Nodos Evaluados, Eficiencia y Matriz Utilidad)")
     print("  📁 06_sistema_experto/              (Grafo de Reglas e Inferencia de Decisiones)")
+    print("  📁 07_sistema_difuso/               (Curvas de Membresía, Superficie y Resultados)")
     print("=" * 75)
 
-def generar_reporte_escrito_final(inventario_actual, alertas, predicciones, datos_ventas, total_pedidos, quiebres_prev, mermas_prev, predicciones_completas=None, red_bayesiana=None, busqueda_res=None, astar_res=None, resultados_poda=None, ruta_salida="reportes/reporte_ejecucion.txt", agente_cerebro=None, agente_actuador=None):
+def generar_reporte_escrito_final(inventario_actual, alertas, predicciones, datos_ventas, total_pedidos, quiebres_prev, mermas_prev, predicciones_completas=None, red_bayesiana=None, busqueda_res=None, astar_res=None, resultados_poda=None, resultados_difusos=None, ruta_salida="reportes/reporte_ejecucion.txt", agente_cerebro=None, agente_actuador=None):
     # Genera el archivo consolidado de reporte escrito en disco.
     with open(ruta_salida, "w", encoding="utf-8") as archivo:
         archivo.write("========================================================================\n")
@@ -1008,6 +1040,35 @@ def generar_reporte_escrito_final(inventario_actual, alertas, predicciones, dato
             archivo.write("12.2 Registro de Pasadas del Motor de Inferencia:\n")
             for linea in traza_prod["traza"]:
                 archivo.write(f"  {linea}\n")
+            archivo.write("\n")
+
+        # Sección 13: Sistema Difuso de Decisión
+        if resultados_difusos is not None:
+            archivo.write("\n13. SISTEMA DIFUSO DE DECISIÓN (SÍLABO: CONTROLADOR DIFUSO DE INVENTARIO Y DESCUENTOS)\n")
+            archivo.write("------------------------------------------------------------------------\n")
+            archivo.write("Se implementó un controlador difuso Mamdani desde cero para calcular\n")
+            archivo.write("automáticamente la urgencia de reabastecimiento y los descuentos preventivos.\n\n")
+            
+            archivo.write(f"{'Producto':<30} | {'Stock Ratio (%)':<17} | {'Urgencia Pedido (%)':<21} | {'Desc. Sugerido (%)':<20}\n")
+            archivo.write("-" * 95 + "\n")
+            for r in resultados_difusos:
+                archivo.write(f"{r['producto_nombre']:<30} | {r['stock_ratio']:<17.1f} | {r['urgencia_pedido_pct']:<21.1f} | {r['descuento_sugerido_pct']:<20.1f}\n")
+            
+            # Traza paso a paso del primer producto como demostración
+            if len(resultados_difusos) > 0:
+                demo_prod = resultados_difusos[0]
+                archivo.write(f"\n13.1 Traza de Inferencia Difusa Detallada (Ejemplo: {demo_prod['producto_nombre']}):\n")
+                archivo.write(f"  * Relación Stock-Demanda medida : {demo_prod['stock_ratio']:.2f}%\n")
+                archivo.write(f"  * Días para vencer medidos      : {demo_prod['dias_vencimiento']} (perecedero: {demo_prod['es_perecedero']})\n")
+                archivo.write("  * Grados de Membresía de Entrada:\n")
+                archivo.write(f"    - Stock Ratio : Bajo={demo_prod['membresia_stock']['bajo']:.3f}, Medio={demo_prod['membresia_stock']['medio']:.3f}, Alto={demo_prod['membresia_stock']['alto']:.3f}\n")
+                archivo.write(f"    - Vencimiento : Crítico={demo_prod['membresia_vencimiento']['critico']:.3f}, Cercano={demo_prod['membresia_vencimiento']['cercano']:.3f}, Seguro={demo_prod['membresia_vencimiento']['seguro']:.3f}\n")
+                archivo.write("  * Consecuentes de Reglas Difusas Disparadas:\n")
+                archivo.write(f"    - Urgencia de Pedido : Crítica={demo_prod['reglas_urgencia']['critica']:.3f}, Moderada={demo_prod['reglas_urgencia']['moderada']:.3f}, Nula={demo_prod['reglas_urgencia']['nula']:.3f}\n")
+                archivo.write(f"    - Descuento Sugerido : Agresivo={demo_prod['reglas_descuento']['agresivo']:.3f}, Moderado={demo_prod['reglas_descuento']['moderado']:.3f}, Ninguno={demo_prod['reglas_descuento']['ninguno']:.3f}\n")
+                archivo.write(f"  * Resultados Defuzzificados (Centroide):\n")
+                archivo.write(f"    - Urgencia de Pedido final : {demo_prod['urgencia_pedido_pct']:.1f}%\n")
+                archivo.write(f"    - Descuento sugerido final : {demo_prod['descuento_sugerido_pct']:.1f}%\n")
             archivo.write("\n")
 
         archivo.write("\n========================================================================\n")

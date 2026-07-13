@@ -1,6 +1,6 @@
 ========================================================================
          INFORME DE PREDICCIÓN Y OPTIMIZACIÓN DE INVENTARIO - PYMEVISION AI
-Fecha de Emisión: 09/07/2026 16:34:38
+Fecha de Emisión: 12/07/2026 19:55:23
 ========================================================================
 
 1. RESULTADOS DE LA SIMULACIÓN AUTÓNOMA (JUNIO - AGOSTO 2026)
@@ -124,64 +124,36 @@ el stock de forma 100% autónoma ante la ausencia de registros de ventas.
 4. ALERTAS OPERATIVAS (HORAS PICO / FERIADOS SEPTIEMBRE)
 ------------------------------------------------------------------------
 - Producto: Inca Kola 500ml | HORA_PICO
-  Detalle: El modelo MLP predice picos de ventas en las horas: 20:00, 21:00, 22:00, 23:00.
-  Acción: Tener reabastecido el stock en góndola a partir de las 19:30.
+  Detalle: El modelo MLP predice picos de ventas en las horas: 12:00, 13:00, 20:00.
+  Acción: Tener reabastecido el stock en góndola a partir de las 11:30.
 
 - Producto: Coca Cola 500ml | HORA_PICO
-  Detalle: El modelo MLP predice picos de ventas en las horas: 20:00, 21:00, 22:00, 23:00.
-  Acción: Tener reabastecido el stock en góndola a partir de las 19:30.
+  Detalle: El modelo MLP predice picos de ventas en las horas: 12:00, 18:00, 19:00, 20:00.
+  Acción: Tener reabastecido el stock en góndola a partir de las 11:30.
 
 - Producto: Agua San Luis 625ml | HORA_PICO
-  Detalle: El modelo MLP predice picos de ventas en las horas: 20:00, 21:00, 22:00, 23:00.
-  Acción: Tener reabastecido el stock en góndola a partir de las 19:30.
-
-- Producto: Yogurt Gloria 1L | HORA_PICO
-  Detalle: El modelo MLP predice picos de ventas en las horas: 20:00, 21:00, 22:00, 23:00.
-  Acción: Tener reabastecido el stock en góndola a partir de las 19:30.
-
-- Producto: Leche Gloria 1L | HORA_PICO
-  Detalle: El modelo MLP predice picos de ventas en las horas: 20:00, 21:00, 22:00, 23:00.
-  Acción: Tener reabastecido el stock en góndola a partir de las 19:30.
+  Detalle: El modelo MLP predice picos de ventas en las horas: 18:00, 19:00, 20:00, 21:00.
+  Acción: Tener reabastecido el stock en góndola a partir de las 17:30.
 
 - Producto: Lays 42g | HORA_PICO
-  Detalle: El modelo MLP predice picos de ventas en las horas: 20:00, 21:00, 22:00, 23:00.
-  Acción: Tener reabastecido el stock en góndola a partir de las 19:30.
+  Detalle: El modelo MLP predice picos de ventas en las horas: 19:00, 20:00.
+  Acción: Tener reabastecido el stock en góndola a partir de las 18:30.
 
 - Producto: Doritos 42g | HORA_PICO
-  Detalle: El modelo MLP predice picos de ventas en las horas: 13:00, 21:00, 22:00, 23:00.
-  Acción: Tener reabastecido el stock en góndola a partir de las 12:30.
-
-- Producto: InkaChips 40g | HORA_PICO
-  Detalle: El modelo MLP predice picos de ventas en las horas: 13:00, 21:00, 22:00, 23:00.
-  Acción: Tener reabastecido el stock en góndola a partir de las 12:30.
+  Detalle: El modelo MLP predice picos de ventas en las horas: 19:00, 20:00.
+  Acción: Tener reabastecido el stock en góndola a partir de las 18:30.
 
 - Producto: Sublime 30g | HORA_PICO
-  Detalle: El modelo MLP predice picos de ventas en las horas: 20:00, 21:00, 22:00, 23:00.
-  Acción: Tener reabastecido el stock en góndola a partir de las 19:30.
-
-- Producto: Pan de Molde Bimbo 500g | HORA_PICO
-  Detalle: El modelo MLP predice picos de ventas en las horas: 20:00, 21:00, 22:00, 23:00.
-  Acción: Tener reabastecido el stock en góndola a partir de las 19:30.
+  Detalle: El modelo MLP predice picos de ventas en las horas: 19:00.
+  Acción: Tener reabastecido el stock en góndola a partir de las 18:30.
 
 - Producto: Arroz Costeño 1kg | HORA_PICO
-  Detalle: El modelo MLP predice picos de ventas en las horas: 0:00, 1:00, 2:00, 23:00.
-  Acción: Tener reabastecido el stock en góndola a partir de las 0:30.
-
-- Producto: Aceite Primor 1L | HORA_PICO
-  Detalle: El modelo MLP predice picos de ventas en las horas: 20:00, 21:00, 22:00, 23:00.
-  Acción: Tener reabastecido el stock en góndola a partir de las 19:30.
+  Detalle: El modelo MLP predice picos de ventas en las horas: 12:00, 19:00.
+  Acción: Tener reabastecido el stock en góndola a partir de las 11:30.
 
 - Producto: Fideos Don Vittorio 500g | HORA_PICO
-  Detalle: El modelo MLP predice picos de ventas en las horas: 0:00, 21:00, 22:00, 23:00.
-  Acción: Tener reabastecido el stock en góndola a partir de las 0:30.
-
-- Producto: Atún Florida 170g | HORA_PICO
-  Detalle: El modelo MLP predice picos de ventas en las horas: 0:00, 21:00, 22:00, 23:00.
-  Acción: Tener reabastecido el stock en góndola a partir de las 0:30.
-
-- Producto: Detergente Ariel 500g | HORA_PICO
-  Detalle: El modelo MLP predice picos de ventas en las horas: 13:00, 14:00.
-  Acción: Tener reabastecido el stock en góndola a partir de las 12:30.
+  Detalle: El modelo MLP predice picos de ventas en las horas: 18:00, 19:00, 20:00.
+  Acción: Tener reabastecido el stock en góndola a partir de las 17:30.
 
 5. PROYECCIÓN DE DEMANDA PARA SEPTIEMBRE (PRIMEROS 7 DÍAS)
 ------------------------------------------------------------------------
@@ -302,9 +274,9 @@ decisiones en el ciclo Sense-Plan-Act del Actuador, se incorporaron 3 algoritmos
   * Estrategia: Ruta de Picking con Heurística de Vecino Más Cercano (Nearest Neighbor) + A*
   * Función de Evaluación: f(n) = g(n) + h(n) en cada etapa de recorrido
   * Heurística h(n): Distancia Manhattan d(n, próximo_estante) = |x - x_obj| + |y - y_obj|
-  * Costo Real Acumulado Total g(n)       : 62.00
+  * Costo Real Acumulado Total g(n)       : 54.00
   * Heurística Inicial h(0,0)             : 3.00
-  * Evaluación Total de Ruta f(n)         : 62.00
+  * Evaluación Total de Ruta f(n)         : 54.00
 
 9.3 Priorización Estratégica de Pedidos (A* Ranking f(n)):
 Producto                  | Alerta             | Prob. Riesgo | Costo g(n) | Heur. h(n) | Prioridad f(n)
@@ -381,21 +353,21 @@ encargado de modelar la demanda de ventas por hora.
 
 Producto                       | Muestras Tr. | Muestras Val. | MAE      | RMSE     | R² Score  
 --------------------------------------------------------------------------------------------
-Inca Kola 500ml                | 248          | 63            | 1.131    | 1.418    | 0.307     
-Coca Cola 500ml                | 285          | 72            | 1.116    | 1.675    | 0.194     
-Agua San Luis 625ml            | 264          | 66            | 0.844    | 1.124    | 0.407     
-Yogurt Gloria 1L               | 254          | 64            | 0.666    | 0.805    | 0.320     
-Leche Gloria 1L                | 245          | 62            | 0.591    | 0.783    | 0.531     
-Lays 42g                       | 262          | 66            | 0.919    | 1.492    | 0.271     
-Doritos 42g                    | 267          | 67            | 0.615    | 0.765    | 0.445     
-InkaChips 40g                  | 258          | 65            | 0.822    | 1.005    | 0.340     
-Sublime 30g                    | 245          | 62            | 0.748    | 0.956    | 0.328     
-Pan de Molde Bimbo 500g        | 260          | 66            | 0.610    | 0.789    | 0.064     
-Arroz Costeño 1kg              | 268          | 68            | 0.873    | 1.090    | 0.369     
-Aceite Primor 1L               | 274          | 69            | 0.779    | 1.201    | 0.338     
-Fideos Don Vittorio 500g       | 260          | 66            | 0.753    | 0.965    | 0.434     
-Atún Florida 170g              | 263          | 66            | 0.545    | 0.725    | 0.203     
-Detergente Ariel 500g          | 264          | 67            | 0.523    | 0.605    | 0.072     
+Inca Kola 500ml                | 1766         | 442           | 1.169    | 1.951    | 0.127     
+Coca Cola 500ml                | 1766         | 442           | 1.295    | 2.255    | 0.101     
+Agua San Luis 625ml            | 1766         | 442           | 1.365    | 2.418    | 0.125     
+Yogurt Gloria 1L               | 1766         | 442           | 0.670    | 1.272    | 0.158     
+Leche Gloria 1L                | 1766         | 442           | 0.669    | 1.113    | 0.047     
+Lays 42g                       | 1766         | 442           | 0.893    | 1.654    | 0.075     
+Doritos 42g                    | 1766         | 442           | 0.972    | 1.820    | 0.166     
+InkaChips 40g                  | 1766         | 442           | 1.026    | 1.857    | 0.102     
+Sublime 30g                    | 1766         | 442           | 0.932    | 1.696    | 0.119     
+Pan de Molde Bimbo 500g        | 1766         | 442           | 0.577    | 1.077    | 0.094     
+Arroz Costeño 1kg              | 1766         | 442           | 0.687    | 1.255    | 0.103     
+Aceite Primor 1L               | 1766         | 442           | 0.784    | 1.254    | 0.053     
+Fideos Don Vittorio 500g       | 1766         | 442           | 0.640    | 1.198    | 0.090     
+Atún Florida 170g              | 1766         | 442           | 0.390    | 0.777    | 0.076     
+Detergente Ariel 500g          | 1766         | 442           | 0.339    | 0.633    | 0.150     
 
 12. SISTEMA EXPERTO FORMAL (SÍLABO: REGLAS DE PRODUCCIÓN E INFERENCIA)
 ------------------------------------------------------------------------
@@ -424,6 +396,43 @@ Encadenamiento hacia Adelante (Forward Chaining) para la toma de decisiones.
 === INFERENCIA COMPLETADA CON ÉXITO ===
   Hechos finales en memoria: ['recurso_criticamente_bajo', 'recurso_bajo_seguridad', 'tiempo_reposicion_inminente', 'patron_horario_disponible', 'horas_pico_sobre_percentil_85', 'probabilidad_quiebre_bayesiano_critica', 'RIESGO_QUIEBRE_CRITICO', 'ACCION_ORDEN_EMERGENCIA', 'RIESGO_HORA_PICO', 'ACCION_PREPARAR_GONDOLAS', 'RIESGO_BAYESIANO_CRITICO', 'ACCION_INCREMENTO_SEGURIDAD_MAX']
   Alertas/Recomendaciones deducidas: 6
+
+
+13. SISTEMA DIFUSO DE DECISIÓN (SÍLABO: CONTROLADOR DIFUSO DE INVENTARIO Y DESCUENTOS)
+------------------------------------------------------------------------
+Se implementó un controlador difuso Mamdani desde cero para calcular
+automáticamente la urgencia de reabastecimiento y los descuentos preventivos.
+
+Producto                       | Stock Ratio (%)   | Urgencia Pedido (%)   | Desc. Sugerido (%)  
+-----------------------------------------------------------------------------------------------
+Inca Kola 500ml                | 7.8               | 84.2                  | 4.0                 
+Coca Cola 500ml                | 14.7              | 84.2                  | 4.0                 
+Agua San Luis 625ml            | 5.9               | 84.2                  | 4.0                 
+Yogurt Gloria 1L               | 53.7              | 59.3                  | 4.8                 
+Leche Gloria 1L                | 38.9              | 83.0                  | 4.3                 
+Lays 42g                       | 20.4              | 84.2                  | 4.0                 
+Doritos 42g                    | 10.3              | 84.2                  | 4.0                 
+InkaChips 40g                  | 21.6              | 84.2                  | 4.0                 
+Sublime 30g                    | 14.2              | 84.2                  | 4.0                 
+Pan de Molde Bimbo 500g        | 40.3              | 82.0                  | 4.4                 
+Arroz Costeño 1kg              | 27.6              | 84.2                  | 4.0                 
+Aceite Primor 1L               | 13.8              | 84.2                  | 4.0                 
+Fideos Don Vittorio 500g       | 10.9              | 84.2                  | 4.0                 
+Atún Florida 170g              | 23.5              | 84.2                  | 4.0                 
+Detergente Ariel 500g          | 18.8              | 84.2                  | 4.0                 
+
+13.1 Traza de Inferencia Difusa Detallada (Ejemplo: Inca Kola 500ml):
+  * Relación Stock-Demanda medida : 7.78%
+  * Días para vencer medidos      : 999 (perecedero: False)
+  * Grados de Membresía de Entrada:
+    - Stock Ratio : Bajo=1.000, Medio=0.000, Alto=0.000
+    - Vencimiento : Crítico=0.000, Cercano=0.000, Seguro=0.000
+  * Consecuentes de Reglas Difusas Disparadas:
+    - Urgencia de Pedido : Crítica=1.000, Moderada=0.000, Nula=0.000
+    - Descuento Sugerido : Agresivo=0.000, Moderado=0.000, Ninguno=1.000
+  * Resultados Defuzzificados (Centroide):
+    - Urgencia de Pedido final : 84.2%
+    - Descuento sugerido final : 4.0%
 
 
 ========================================================================
