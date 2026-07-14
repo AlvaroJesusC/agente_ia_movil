@@ -662,7 +662,7 @@ def ejecutar_agente():
     reportador.graficar_patrones_horas_pico(inventario_final_agosto, diccionario_patrones_horarios)
     reportador.graficar_curva_perdida_mlp(agente_cerebro)
     reportador.graficar_prediccion_vs_real_mlp(agente_cerebro)
-    reportador.graficar_arquitectura_mlp_proyecto()
+    reportador.graficar_arquitectura_mlp_proyecto(agente_cerebro)
     reportador.graficar_comportamiento_perceptrones()
     reportador.graficar_productos_mas_demandados(datos_ventas_completos)
     reportador.generar_dashboard_alertas(alertas_septiembre)

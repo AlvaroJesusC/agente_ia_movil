@@ -269,9 +269,31 @@ def graficar_prediccion_vs_real_mlp(agente_cerebro, directorio="reportes"):
     plt.savefig(plot_path, dpi=150, bbox_inches="tight")
     plt.close()
 
-def graficar_arquitectura_mlp_proyecto(directorio="reportes"):
+def graficar_arquitectura_mlp_proyecto(agente_cerebro=None, directorio="reportes"):
     # Genera el diagrama de la arquitectura del perceptrón multicapa usado en el proyecto.
     asegurar_directorio_reportes(directorio)
+    
+    columnas = None
+    if agente_cerebro is not None and len(agente_cerebro.metricas_modelos) > 0:
+        first_pid = list(agente_cerebro.metricas_modelos.keys())[0]
+        metricas = agente_cerebro.metricas_modelos[first_pid]
+        if "X_val" in metricas and hasattr(metricas["X_val"], "columns"):
+            columnas = list(metricas["X_val"].columns)
+            
+    if columnas is None:
+        columnas = ["hora_sin", "hora_cos", "dia_semana_num", "es_feriado_num", "es_fin_semana_num"]
+        
+    mapeo_etiquetas = {
+        "hora_sin": "hora_sin",
+        "hora_cos": "hora_cos",
+        "dia_semana_num": "dia_semana",
+        "es_feriado_num": "feriado",
+        "es_fin_semana_num": "fin_semana",
+        "dia_semana": "dia_semana",
+        "feriado": "feriado",
+        "fin_semana": "fin_semana"
+    }
+    nombres_entradas = [mapeo_etiquetas.get(col, col) for col in columnas]
     
     plt.figure(figsize=(10, 6))
     ax = plt.gca()
@@ -279,9 +301,9 @@ def graficar_arquitectura_mlp_proyecto(directorio="reportes"):
     
     node_positions = {}
     
-    # Capa 0: Entrada (4 nodos)
-    y_entradas = [1.5, 0.5, -0.5, -1.5]
-    nombres_entradas = ["Hora", "Día Semana", "Feriado", "Fin Semana"]
+    # Capa 0: Entrada (Nodos dinámicos)
+    n_entradas = len(columnas)
+    y_entradas = np.linspace(2.0, -2.0, n_entradas)
     for idx, (y, nombre) in enumerate(zip(y_entradas, nombres_entradas)):
         node_positions[f"E_{idx}"] = (1, y, nombre)
         
@@ -343,7 +365,7 @@ def graficar_arquitectura_mlp_proyecto(directorio="reportes"):
                 plt.text(x, y, name, fontsize=8, ha='center', va='center', color='white', fontweight='bold')
                 
     # Añadir títulos de capas en la parte superior
-    plt.text(1, 2.7, "Capa de Entrada\n(4 variables)", fontsize=11, ha='center', va='center', fontweight='bold', color='#2C3E50')
+    plt.text(1, 2.7, f"Capa de Entrada\n({n_entradas} variables)", fontsize=11, ha='center', va='center', fontweight='bold', color='#2C3E50')
     plt.text(3.5, 2.7, "Capa Oculta 1\n(50 Neuronas)", fontsize=11, ha='center', va='center', fontweight='bold', color='#2C3E50')
     plt.text(6.0, 2.7, "Capa Oculta 2\n(25 Neuronas)", fontsize=11, ha='center', va='center', fontweight='bold', color='#2C3E50')
     plt.text(8.5, 2.7, "Capa de Salida\n(1 Neurona)", fontsize=11, ha='center', va='center', fontweight='bold', color='#2C3E50')
